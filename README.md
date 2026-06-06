@@ -63,32 +63,39 @@ flutter pub get
 ### 실행
 ```powershell
 flutter run                 # 연결된 기기/에뮬레이터 선택
-flutter run -d chrome       # 웹(검증용 — 이 머신에서 동작 확인 가능)
+flutter run -d chrome       # 웹(빠른 동작 확인용)
 ```
-빌드 산출물:
+
+### 📦 Android APK (빌드 완료 · 즉시 설치 가능)
+이 머신(`D:\dev\HCI`)에서 **빌드 성공**했고, 결과 APK는 다음 위치에 있다:
+```
+dist\전자출결-v1.0-release.apk        (46MB · 통합 ABI · 디버그키 서명 → 사이드로드 가능)
+build\app\outputs\flutter-apk\app-release.apk   (동일 파일)
+```
+직접 빌드하려면:
 ```powershell
-flutter build apk           # Android (아래 ⚠️ 참고)
-flutter build ios           # iOS (macOS·Xcode 필요)
-flutter build web           # 웹 (이 머신에서 빌드 성공 확인됨 → build/web)
+flutter build apk --release   # → build\app\outputs\flutter-apk\app-release.apk
 ```
+**휴대폰 설치**: APK를 폰으로 전송(USB/클라우드) → 파일 탭 → "출처를 알 수 없는 앱 설치" 허용 → 설치 → 홈에 **전자출결** 아이콘.
+
+### iOS
+Windows에서는 빌드 불가. **Mac + Xcode**에서 빌드·설치 → **[docs/iOS_빌드_가이드.md](docs/iOS_빌드_가이드.md)** 참고.
 
 ### 검증 (이 저장소에서 통과 확인됨)
 ```powershell
 dart analyze                # 정적 분석 → No issues found!
-flutter test                # 위젯 스모크 + 15개 화면 렌더 테스트 → All tests passed!
-flutter build web           # 실제 플랫폼 컴파일 → ✓ Built build\web
+flutter analyze             # (ASCII 경로라 정상 동작) → No issues found!
+flutter test                # 스모크 + 15화면 렌더 + 플로우 8개 → All tests passed!
+flutter build web           # 웹 컴파일 → ✓ Built build\web
+flutter build apk --release # Android → ✓ Built app-release.apk (46MB)
 ```
 
-### ⚠️ 경로 주의 (중요)
-현재 프로젝트 경로에 **한글·공백**(`…전북대학교\인간-컴퓨터상호작용\P3`)이 포함되어 있어 다음 제약이 있다.
-- **`flutter analyze`는 LSP 분석 서버가 한글 경로를 파싱하다 크래시**한다 → 대신 **`dart analyze`** 를 쓰면 정상 동작한다(이 프로젝트는 `dart analyze` 클린).
-- **Android Gradle 빌드는 경로의 공백/한글에서 실패**할 수 있다. Android/iOS 실기기 빌드가 필요하면 프로젝트를 **공백·한글 없는 경로**(예: `D:\eatt`)로 복사한 뒤 빌드하길 권장한다. 코드는 동일하다.
-- **웹·Windows 데스크톱 빌드/실행**은 경로 영향이 적어 이 위치에서도 동작한다(검증에 사용).
-
-### 이 머신의 빌드 환경 메모 (`flutter doctor`)
-- ✅ 웹(Chrome) · Visual Studio 2022(Windows 데스크톱) 사용 가능
-- ❌ **Android**: SDK는 있으나 `cmdline-tools` 미설치 + JDK 17+ 미구성 → 실기기 빌드 전 `Android Studio` 또는 cmdline-tools 설치 + 라이선스 동의 필요
-- ⚠️ **Windows 데스크톱**: 플러그인(symlink) 때문에 **개발자 모드(Developer Mode)** 필요 (`start ms-settings:developers`)
+### 이 머신의 Android 빌드 환경 (셋업 완료)
+APK 빌드를 위해 아래가 설치·구성되어 있다(`flutter build apk` 재실행 시 그대로 동작):
+- **JDK 17**: `D:\jdk17\jdk-17.0.19+10` (Flutter에 `flutter config --jdk-dir`로 연결)
+- **Android SDK**: `%LOCALAPPDATA%\Android\Sdk` — cmdline-tools, **platform android-36**, **build-tools 36.0.0**, platform-tools, NDK 28.2/CMake 3.22(빌드 중 자동 설치), 라이선스 동의 완료
+- **`android/gradle.properties`에 `kotlin.incremental=false`** — Pub 캐시(C:)와 프로젝트(D:)가 다른 드라이브일 때 Kotlin 증분 캐시가 "different roots"로 크래시하는 문제 회피
+- **`windows/` 데스크톱 폴더 제거** — Flutter가 APK 빌드 중에도 *Windows 데스크톱* 플러그인 심링크를 만들려다 권한(개발자 모드) 부족으로 실패하던 것을 원천 차단(타깃은 Android·iOS·web)
 
 ---
 
