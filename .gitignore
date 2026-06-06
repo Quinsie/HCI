@@ -44,6 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# 배포용 빌드 산출물 (바이너리는 git에 넣지 않음 — dist 폴더에 보관)
-/dist/
+# 빌드 산출물 apk는 제외하되, 배포용 dist/ APK는 저장소에 포함
 *.apk
+!dist/*.apk
