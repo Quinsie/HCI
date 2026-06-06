@@ -25,8 +25,8 @@ void main() {
     expect(find.text('전자출결'), findsWidgets);
     expect(store.screen, 'splash');
 
-    // 로고 5탭 → 디버그 진입
-    final logo = find.text('로고').first;
+    // 로고 5탭 → 디버그 진입 (로고는 이미지)
+    final logo = find.byType(Image).first;
     for (var i = 0; i < 5; i++) {
       await tester.tap(logo);
       await tester.pump();

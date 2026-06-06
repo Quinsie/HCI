@@ -45,17 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
-                width: 104,
-                height: 104,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.ink, width: 2),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                alignment: Alignment.center,
-                child: const Text('로고',
-                    style: TextStyle(fontSize: 13, color: AppColors.mut)),
-              ),
+              Image.asset('assets/logo.png', width: 92, height: 132),
               if (store.logoTaps > 0)
                 Positioned(
                   right: -12,

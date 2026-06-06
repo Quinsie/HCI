@@ -48,17 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Center(
           child: Column(
             children: [
-              Container(
-                width: 66,
-                height: 66,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.ink, width: 1.5),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                alignment: Alignment.center,
-                child: const Text('로고',
-                    style: TextStyle(fontSize: 12, color: AppColors.mut)),
-              ),
+              Image.asset('assets/logo.png', width: 58, height: 84),
               const SizedBox(height: 10),
               const Text('전자출결',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
