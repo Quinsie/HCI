@@ -1,0 +1,12 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # 한국어 식별자/주석이 많고 테스트 빌드 성격이라 일부 스타일 룰은 경고로 완화
+    prefer_const_constructors: ignore
+
+linter:
+  rules:
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    use_key_in_widget_constructors: false
