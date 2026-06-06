@@ -78,8 +78,19 @@ flutter build apk --release   # → build\app\outputs\flutter-apk\app-release.ap
 ```
 **휴대폰 설치**: APK를 폰으로 전송(USB/클라우드) → 파일 탭 → "출처를 알 수 없는 앱 설치" 허용 → 설치 → 홈에 **전자출결** 아이콘.
 
-### iOS
-Windows에서는 빌드 불가. **Mac + Xcode**에서 빌드·설치 → **[docs/iOS_빌드_가이드.md](docs/iOS_빌드_가이드.md)** 참고.
+### iOS (Mac + Xcode 필요 · 무료 Apple ID로 5명 직접 설치)
+이 머신(macOS 26.3, Apple M4 / Xcode 26.5 / Flutter 3.44)에서 **빌드 검증 완료**
+(`flutter build ios --no-codesign` → `✓ Built build/ios/iphoneos/Runner.app`). 의존성은 **Swift Package Manager**로 처리되어 CocoaPods가 필요 없다.
+
+무료 Apple ID로 **본인 포함 5명 아이폰에 케이블로 직접 설치**(서명 7일 만료 → 재설치)하는 시나리오다.
+- 🧰 **설치 담당자(Mac)** 전체 절차(Xcode 설치·서명·배포·재설치): **[docs/iOS_빌드_가이드.md](docs/iOS_빌드_가이드.md)**
+- 📱 **아이폰 사용자별** 따라하기(비개발자용): **[docs/아이폰_설치_안내.md](docs/아이폰_설치_안내.md)**
+
+설치는 헬퍼 스크립트로 한 줄:
+```bash
+scripts/ios_install.sh                 # 사전 점검 + 연결된 기기 device-id 확인
+scripts/ios_install.sh <device-id>     # 그 아이폰에 release 설치 (pub get·SPM 자동)
+```
 
 ### 검증 (이 저장소에서 통과 확인됨)
 ```powershell
