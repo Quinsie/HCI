@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>전자출결 — Flow Wireframe Board</title>
+<style>
+  /* ============ BASE ============ */
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #fff;
+    color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .board { max-width: 1520px; margin: 0 auto; padding: 32px 28px 80px; }
+
+  h1 { font-size: 22px; margin: 0 0 4px; font-weight: 700; }
+  h2 { font-size: 16px; margin: 0; font-weight: 700; }
+  h3 { font-size: 14px; margin: 0; font-weight: 700; }
+  p  { margin: 0; }
+  hr { border: none; border-top: 1px solid #000; margin: 12px 0; }
+  ul { margin: 0; padding-left: 18px; }
+  ul li { margin-bottom: 3px; }
+
+  .meta { font-size: 11px; color: #555; }
+
+  /* status colors (only used for status pills / button states) */
+  :root {
+    --c-attend: #2e7d32;
+    --c-late:   #d6a200;
+    --c-error:  #c0392b;
+    --c-none:   #888;
+    --c-btn:    #1e6fd9;
+  }
+
+  /* ============ SECTION ============ */
+  .section { margin-top: 44px; }
+  .section-head {
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 16px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .section-head .n { font-size: 11px; color: #555; }
+  .section-head .d { font-size: 11px; color: #555; margin-left: auto; }
+
+  /* ============ OVERVIEW ============ */
+  .overview {
+    border: 1px solid #000;
+    padding: 14px 16px;
+    margin-top: 10px;
+  }
+  .overview .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .tag {
+    border: 1px solid #000;
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+
+  /* ============ ASSUMPTIONS ============ */
+  .assume-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .assume {
+    border: 1px solid #000;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .assume .h {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .assume h3 { margin-bottom: 6px; }
+
+  /* status legend */
+  .status-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 12px;
+    border: 1px solid #000;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .status-legend .l { display: flex; align-items: center; gap: 5px; }
+  .status-legend .sw {
+    width: 14px; height: 14px;
+    border: 1px solid #000;
+    display: inline-block;
+  }
+  .sw.attend { background: var(--c-attend); }
+  .sw.late   { background: var(--c-late); }
+  .sw.error  { background: var(--c-error); }
+  .sw.none   { background: var(--c-none); }
+  .sw.btn    { background: var(--c-btn); }
+
+  /* ============ TASKS ============ */
+  .tasks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .task {
+    border: 1px solid #000;
+    padding: 10px 12px;
+  }
+  .task .lbl { font-size: 10px; color: #555; margin-bottom: 4px; }
+  .task h3 { margin-bottom: 4px; }
+  .task p { font-size: 12px; color: #333; }
+
+  /* ============ TASK BLOCK (Scenario + Alternatives + Final) ============ */
+  .task-block {
+    border: 1px solid #000;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .task-block .head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 1px dashed #888;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .task-block .head .t-no {
+    font-size: 11px; color: #555;
+  }
+  .task-block .head h3 { font-size: 16px; }
+  .task-block .head .pill {
+    margin-left: auto;
+    border: 1px solid #000;
+    padding: 1px 8px;
+    font-size: 10px;
+  }
+
+  /* scenario steps */
+  .scenario { margin-bottom: 14px; }
+  .scenario .label { font-size: 11px; color: #555; margin-bottom: 6px; }
+  .steps {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    flex-wrap: wrap;
+  }
+  .step {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    font-size: 11px;
+    min-width: 140px;
+    flex: 1;
+    position: relative;
+  }
+  .step .sn {
+    font-size: 9px; color: #555;
+    border-bottom: 1px solid #000;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+  }
+
+  /* alternatives mini wireframes */
+  .alts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr) 220px;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .alt {
+    border: 1px solid #000;
+    padding: 8px 10px;
+  }
+  .alt .tag-row { display: flex; align-items: baseline; gap: 6px; }
+  .alt .a-no { font-size: 10px; color: #555; }
+  .alt h4 { margin: 2px 0 4px; font-size: 13px; }
+  .alt .desc { font-size: 11px; color: #333; }
+  .alt .mini {
+    border: 1px solid #000;
+    margin: 6px 0;
+    padding: 6px;
+    height: 220px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .alt .strength {
+    font-size: 11px;
+    border-top: 1px dashed #888;
+    padding-top: 4px;
+    color: #333;
+  }
+  .final-choice {
+    border: 1px solid #000;
+    background: #fafafa;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .final-choice .h {
+    font-size: 10px;
+    color: #555;
+    margin-bottom: 4px;
+  }
+  .final-choice b { display: block; margin-bottom: 4px; font-size: 12px; }
+
+  /* mini box helpers */
+  .mb {
+    border: 1px solid #000;
+    padding: 3px 5px;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+  .mb.d { border-style: dashed; color: #555; }
+  .mini-circle {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    border: 1.5px solid #000;
+    margin: 8px auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: #fff;
+  }
+  .mini-circle.blue   { background: var(--c-btn); }
+  .mini-circle.green  { background: var(--c-attend); }
+  .mini-circle.yellow { background: var(--c-late); color: #000; }
+  .mini-circle.red    { background: var(--c-error); }
+  .mini-circle.gray   { background: var(--c-none); }
+  .mini-circle.spin   {
+    background: #fff; color: #000;
+    border: 4px solid #ddd;
+    border-top-color: var(--c-btn);
+  }
+
+  .mini-step {
+    display: flex; gap: 4px; align-items: center;
+    margin-bottom: 4px;
+  }
+  .mini-step .n {
+    width: 14px; height: 14px;
+    border: 1px solid #000;
+    text-align: center; font-size: 9px; line-height: 12px;
+    flex: 0 0 14px;
+  }
+  .mini-step .l {
+    flex: 1; border: 1px dashed #888;
+    padding: 1px 4px; font-size: 10px;
+  }
+  .mini-step.done .n { background: #000; color: #fff; }
+  .mini-step.active .l { border-style: solid; }
+
+  .mini-banner {
+    border: 1px solid #000;
+    background: #fff8d0;
+    padding: 3px 5px;
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  /* ============ PHONES ============ */
+  .phones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    margin-bottom: 22px;
+    align-items: flex-start;
+  }
+  .phone { width: 280px; flex: 0 0 280px; }
+  .phone .cap { font-size: 10px; color: #555; margin-bottom: 2px; }
+  .phone .ttl { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .device {
+    width: 280px;
+    height: 606px;
+    border: 1px solid #000;
+    border-radius: 22px;
+    padding: 10px 8px;
+    position: relative;
+    background: #fff;
+  }
+  .device::before {
+    content: "";
+    position: absolute;
+    top: 6px; left: 50%;
+    width: 60px; height: 8px;
+    transform: translateX(-50%);
+    border: 1px solid #000;
+    border-radius: 4px;
+  }
+  .statusbar {
+    display: flex; justify-content: space-between;
+    font-size: 9px; color: #555;
+    padding: 0 12px;
+    margin-top: 8px;
+    margin-bottom: 6px;
+  }
+  .screen {
+    border: 1px dashed #888;
+    height: calc(100% - 30px);
+    padding: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .sh {
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px;
+  }
+  .sh .back {
+    width: 14px; height: 14px;
+    border: 1px solid #000;
+    text-align: center; line-height: 12px;
+    font-size: 10px;
+  }
+  .sh .ttl { font-weight: 700; }
+  .sh .right { margin-left: auto; font-size: 10px; color: #555; }
+
+  .box {
+    border: 1px solid #000;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    background: #fff;
+  }
+  .box.dashed { border-style: dashed; }
+  .box .lbl { font-size: 9px; color: #555; margin-bottom: 2px; }
+  .box .big { font-size: 13px; font-weight: 700; }
+
+  .flex { display: flex; }
+  .flex.b { justify-content: space-between; align-items: center; }
+  .flex.g { gap: 6px; }
+
+  .btn {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    background: #fff;
+    margin-bottom: 6px;
+  }
+  .btn.p { background: #000; color: #fff; }
+  .btn.s { padding: 4px 6px; font-size: 11px; }
+
+  .chip {
+    border: 1px solid #000;
+    padding: 2px 6px;
+    font-size: 10px;
+    background: #fff;
+    display: inline-block;
+  }
+  .chip.a { background: #000; color: #fff; }
+
+  .inp {
+    border: 1px solid #000;
+    padding: 5px 8px;
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  /* status pills */
+  .pill {
+    border: 1px solid #000;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: #fff;
+    background: #888;
+  }
+  .pill.attend { background: var(--c-attend); }
+  .pill.late   { background: var(--c-late); color: #000; }
+  .pill.error  { background: var(--c-error); }
+  .pill.none   { background: var(--c-none); }
+
+  /* big central button on student screens */
+  /* unified student-screen layout: top content reserves busiest height,
+     circle centers in the leftover space, bottom zone is fixed */
+  .s-top { min-height: 210px; display:flex; flex-direction:column; gap:6px; }
+  .s-mid { flex:1; display:flex; align-items:center; justify-content:center; padding-bottom:38px; }
+  .s-bot { height:56px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .big-circle {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    border: 2px solid #000;
+    margin: 16px auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700;
+    color: #fff;
+    flex-direction: column;
+    text-align: center;
+  }
+  .big-circle .sub { font-size: 11px; font-weight: 400; margin-top: 4px; }
+  .big-circle.blue   { background: var(--c-btn); }
+  .big-circle.green  { background: var(--c-attend); }
+  .big-circle.yellow { background: var(--c-late); color: #000; }
+  .big-circle.red    { background: var(--c-error); }
+  .big-circle.loading {
+    background: #fff;
+    color: #000;
+    border: 8px solid #e0e0e0;
+    border-top-color: var(--c-btn);
+  }
+
+  /* summary cards */
+  .sum {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+  .sum .c {
+    border: 1px solid #000;
+    text-align: center;
+    padding: 4px 2px;
+    font-size: 10px;
+    background: #fff;
+  }
+  .sum .c b { font-size: 13px; display: block; }
+  .sum .c.attend { background: rgba(46,125,50,0.12); }
+  .sum .c.late   { background: rgba(214,162,0,0.18); }
+  .sum .c.none   { background: rgba(136,136,136,0.18); }
+  .sum .c.error  { background: rgba(192,57,43,0.15); }
+
+  /* student row */
+  .stu {
+    border: 1px solid #000;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px;
+  }
+  .stu .id { font-size: 9px; color: #555; display: block; }
+  .stu .right { display: flex; gap: 4px; align-items: center; }
+
+  /* note */
+  .note {
+    width: 200px; flex: 0 0 200px;
+    border: 1px dashed #000;
+    padding: 8px 10px;
+    font-size: 11px;
+    background: #fff;
+    align-self: stretch;
+  }
+  .note .h { font-size: 10px; color: #555; margin-bottom: 4px; }
+
+  /* design notes grid */
+  .dnotes {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .dn {
+    border: 1px solid #000;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .dn .h { font-size: 10px; color: #555; margin-bottom: 4px; }
+
+  /* keypad */
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+  .keypad .k {
+    border: 1px solid #000;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 12px;
+  }
+  .pin {
+    display: flex; gap: 6px; justify-content: center;
+    margin: 10px 0 10px;
+  }
+  .pin .b {
+    width: 36px; height: 44px;
+    border: 1px solid #000;
+    text-align: center; line-height: 42px;
+    font-size: 18px; color: #888;
+  }
+
+  /* weekly list */
+  .wk {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #000;
+    padding: 5px 8px;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+  .wk .l { display: flex; align-items: center; gap: 6px; }
+  .wk .swatch {
+    width: 12px; height: 12px;
+    border: 1px solid #000;
+  }
+
+  .footer {
+    margin-top: 40px;
+    border-top: 1px solid #000;
+    padding-top: 8px;
+    font-size: 10px;
+    color: #555;
+    display: flex; justify-content: space-between;
+  }
+
+  .small { font-size: 10px; color: #555; }
+  .center { text-align: center; }
+
+  /* ===== FLOW MAP ===== */
+  .flowmap { display:flex; flex-direction:column; gap:12px; }
+  .lane { border:1px solid #000; padding:12px 14px; }
+  .lane .lane-label { font-size:11px; color:#555; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; display:flex; gap:8px; align-items:baseline; }
+  .lane .lane-label b { font-size:13px; color:#000; text-transform:none; letter-spacing:0; }
+  .lane .lane-label .x { margin-left:auto; font-size:10px; color:#888; }
+  .lane-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px 0; }
+  .node { border:1px solid #000; padding:7px 9px; min-width:104px; background:#fff; }
+  .node .id { font-size:9px; color:#555; display:block; margin-bottom:2px; }
+  .node .nm { font-size:11px; font-weight:700; line-height:1.25; }
+  .node .sub2 { font-size:9px; color:#555; margin-top:2px; }
+  .node.start { background:#000; color:#fff; } .node.start .id{ color:#bbb; }
+  .node.ok   { border-left:4px solid var(--c-attend); }
+  .node.late { border-left:4px solid var(--c-late); }
+  .node.err  { border-left:4px solid var(--c-error); }
+  .node.ghost{ border-style:dashed; color:#555; background:#fafafa; }
+  .arrow { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:64px; padding:0 4px; }
+  .arrow .lab { font-size:8.5px; color:#555; text-align:center; line-height:1.2; margin-bottom:1px; max-width:84px; }
+  .arrow .ln { font-size:15px; line-height:1; }
+  .arrow.sm { min-width:96px; }
+  .branch { display:flex; flex-direction:column; gap:6px; border-left:1px dashed #888; margin-left:2px; padding-left:2px; }
+  .branch-row { display:flex; align-items:center; }
+  .loopback { font-size:9px; color:#555; border:1px dashed #888; padding:2px 6px; margin-top:6px; display:inline-block; }
+  .flow-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:10px; color:#555; margin-top:10px; border:1px solid #000; padding:6px 10px; }
+  .flow-legend .l { display:flex; align-items:center; gap:5px; }
+  .flow-legend .bar { width:14px; height:12px; border:1px solid #000; }
+  .bar.ok{border-left:4px solid var(--c-attend);} .bar.late{border-left:4px solid var(--c-late);}
+  .bar.err{border-left:4px solid var(--c-error);} .bar.gh{border-style:dashed;background:#fafafa;}
+</style>
+</head>
+<body>
+<div class="board">
+  <!-- 01 OVERVIEW -->
+  <section>
+    <div class="meta">HCI TEAM PROJECT / Flow Wireframe / 2026 · STAGE 1 — 화면 흐름 정의</div>
+    <h1>전자출결 시스템 — Flow Wireframe Board</h1>
+    <div class="meta">온보딩부터 전체 화면까지 · 화면 나열 + 관계 화살표 · 크로스플랫폼(iOS · Android) 목표</div>
+    <div class="meta">상세 동작 명세 → <a href="전자출결 명세서 v1.html" style="color:#1e6fd9;">전자출결 명세서 v1.html</a> · 보드와 충돌 시 <b>명세서 우선</b></div>
+
+    <div class="overview">
+      <h3>이 보드의 목적</h3>
+      <hr/>
+      <p>
+        본 보드는 전자출결 앱의 <b>전체 화면과 화면 간 이동 관계</b>를 한눈에 정리한 1단계 산출물이다.
+        상단의 <b>Flow Map</b>이 모든 화면을 노드로 보고 어떤 조작이 어느 화면으로 이어지는지를 화살표로 보여주며,
+        하단에는 각 화면의 Lo-fi 목업을 배치한다. 실제 배포가 아니라 <b>팀 내부 Task 검증 테스트</b>를 위한 단일 기기 빌드를 전제로 한다.
+      </p>
+      <p style="margin-top:8px;">
+        테스트는 <b>운영자 프리셋(Operator Preset)</b> 방식을 따른다. 진행자가 숨겨진 디버그 화면에서
+        <b>피험자 페르소나 · 검증할 Task · 기기 상태(권한·네트워크·서버·시간대)</b>를 미리 세팅한 뒤 피험자에게 건네면,
+        앱은 그 시나리오대로만 흐른다. 이를 통해 지각·오류 같은 엣지 상황을 <b>재현 가능</b>하게 만든다.
+      </p>
+      <div class="tag-row">
+        <span class="tag">PLATFORM · iOS + Android</span>
+        <span class="tag">FRAME · 390×844</span>
+        <span class="tag">FIDELITY · Lo-fi</span>
+        <span class="tag">ROLE · 학생 · 교수 · 관리자</span>
+        <span class="tag">TEST · 운영자 프리셋 · 단일 기기</span>
+        <span class="tag">VALIDATE · Task 1–4</span>
+        <span class="tag">STAGE · 1 / 화면 흐름</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01b 로그인 정책 / 샘플 계정 -->
+  <section class="section">
+    <div class="section-head"><span class="n">01</span><h2>로그인 · 역할 분기</h2><span class="d">Auth & Role Routing</span></div>
+    <div class="assume-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="assume">
+        <div class="h">학생 / STUDENT</div>
+        <h3>출결 · 사후 확인</h3>
+        <ul><li>출결 메인 · 오류/인증 · 사후 확인 접근</li><li>고정 계정은 OP1·명세서 참조</li></ul>
+      </div>
+      <div class="assume">
+        <div class="h">교수자 / PROFESSOR</div>
+        <h3>출석 운영</h3>
+        <ul><li>출석 시작 · 실시간 대시보드 · 상태 변경</li><li>고정 계정은 OP1·명세서 참조</li></ul>
+      </div>
+    </div>
+    <div class="status-legend" style="margin-top:12px;">
+      <b style="font-size:11px;">분기 규칙 :</b>
+      <div class="l">로그인 ID로 역할 <b>자동 판별</b> → 해당 홈으로 라우팅</div>
+      <div class="l">고정 계정은 OP1 · 명세서 §2</div>
+    </div>
+  </section>
+
+  <!-- 02 FLOW MAP -->
+  <section class="section">
+    <div class="section-head"><span class="n">02</span><h2>Flow Map — 화면 관계도</h2><span class="d">Screens as nodes · arrows = transitions</span></div>
+
+    <div class="flowmap">
+
+      <!-- LANE 0 : 운영자 테스트 세팅 -->
+      <div class="lane">
+        <div class="lane-label"><b>⓪ 운영자 · 테스트 세팅</b> Operator Preset <span class="x">진행자 — 피험자에게 건네기 전</span></div>
+        <div class="lane-row">
+          <div class="node start"><span class="id">OP0</span><span class="nm">앱 실행</span></div>
+          <div class="arrow sm"><div class="lab">스플래시 로고 5번 탭 · 숨김 진입</div><div class="ln">→</div></div>
+          <div class="node ghost"><span class="id">OP1</span><span class="nm">디버그 · 시나리오 설정</span><span class="sub2">피험자 페르소나 · Task 선택</span></div>
+          <div class="arrow sm"><div class="lab">과목 · 인정시간 · 시간대</div><div class="ln">→</div></div>
+          <div class="node ghost"><span class="id">OP2</span><span class="nm">기기 상태 초기값</span><span class="sub2">권한 3종 · 네트워크 · 서버</span></div>
+          <div class="arrow sm"><div class="lab">적용 &amp; 재시작</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">↪</span><span class="nm">피험자에게 핸드오프</span><span class="sub2">프리셋대로 진행</span></div>
+        </div>
+        <span class="loopback">디버그 화면은 피험자에게 보이지 않음 · 세팅 후 [적용]하면 클린 상태로 진입한다</span>
+      </div>
+
+      <!-- LANE 1 : 피험자 진입 / 분기 -->
+      <div class="lane">
+        <div class="lane-label"><b>① 피험자 진입</b> Subject Entry <span class="x">프리셋 자동 적용</span></div>
+        <div class="lane-row">
+          <div class="node start"><span class="id">S00</span><span class="nm">앱 실행 · 스플래시</span></div>
+          <div class="arrow sm"><div class="lab">프리셋 페르소나로 자동 로그인</div><div class="ln">→</div></div>
+          <div class="node ghost"><span class="id">S01</span><span class="nm">로그인</span><span class="sub2">운영자가 미리 처리 · 건너뜀</span></div>
+          <div class="arrow sm"><div class="lab">설정한 Task로 분기</div><div class="ln">→</div></div>
+          <div class="branch">
+            <div class="branch-row"><div class="arrow sm"><div class="lab">Task 1·2·4 · 학생</div><div class="ln">→</div></div><div class="node"><span class="id">S03</span><span class="nm">학생 홈 · 출결 (②)</span></div></div>
+            <div class="branch-row"><div class="arrow sm"><div class="lab">Task 3 · 학생</div><div class="ln">→</div></div><div class="node"><span class="id">S10</span><span class="nm">출석 현황 (③)</span></div></div>
+            <div class="branch-row"><div class="arrow sm"><div class="lab">교수 시점</div><div class="ln">→</div></div><div class="node"><span class="id">P02</span><span class="nm">실시간 대시보드 (④)</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LANE 1 : 학생 출결 핵심 -->
+      <div class="lane">
+        <div class="lane-label"><b>② 학생 · 출결</b> Attendance Core <span class="x">학생</span></div>
+        <div class="lane-row">
+          <div class="node"><span class="id">S03</span><span class="nm">출결 메인</span><span class="sub2">중앙 원형 버튼</span></div>
+          <div class="arrow"><div class="lab">출결 버튼 탭</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">S04</span><span class="nm">출결 진행 중</span><span class="sub2">로딩 · 대기 큐</span></div>
+          <div class="arrow sm"><div class="lab">환경 상태 판정</div><div class="ln">→</div></div>
+          <div class="branch">
+            <div class="branch-row"><div class="arrow sm"><div class="lab">정상 · 인정시간 내</div><div class="ln">→</div></div><div class="node ok"><span class="id">S05</span><span class="nm">출석 완료</span></div></div>
+            <div class="branch-row"><div class="arrow sm"><div class="lab">정상 · 인정시간 후</div><div class="ln">→</div></div><div class="node late"><span class="id">S06</span><span class="nm">지각 처리</span></div></div>
+            <div class="branch-row"><div class="arrow sm"><div class="lab">오류 발생</div><div class="ln">→</div></div><div class="node err"><span class="id">S07</span><span class="nm">출결 오류</span></div></div>
+          </div>
+        </div>
+        <div class="lane-row" style="margin-top:10px;">
+          <div class="node err"><span class="id">S07</span><span class="nm">출결 오류</span><span class="sub2">최초 시도 시각 기록</span></div>
+          <div class="branch">
+            <div class="branch-row"><div class="arrow sm"><div class="lab">재시도</div><div class="ln">→</div></div><div class="node"><span class="id">S04</span><span class="nm">진행 중 (재시도)</span></div></div>
+            <div class="branch-row"><div class="arrow sm"><div class="lab">인증번호 입력 선택</div><div class="ln">→</div></div><div class="node"><span class="id">S08</span><span class="nm">인증번호 입력</span></div>
+              <div class="arrow sm"><div class="lab">4자리 성공 · 최초시각 기준</div><div class="ln">→</div></div>
+              <div class="branch">
+                <div class="branch-row"><div class="arrow"><div class="lab">시간 내</div><div class="ln">→</div></div><div class="node ok"><span class="id">S13</span><span class="nm">인증 출석</span></div></div>
+                <div class="branch-row"><div class="arrow"><div class="lab">시간 후</div><div class="ln">→</div></div><div class="node late"><span class="id">S14</span><span class="nm">인증 지각</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="loopback">↺ S05 · S06 · S13 · S14 결과 화면 → [홈] 탭하면 출석 현황(③)으로 이동 가능</span>
+      </div>
+
+      <!-- LANE 2 : 학생 사후 확인 -->
+      <div class="lane">
+        <div class="lane-label"><b>③ 학생 · 사후 확인</b> History <span class="x">학생</span></div>
+        <div class="lane-row">
+          <div class="node"><span class="id">S10</span><span class="nm">출석 현황 요약</span><span class="sub2">과목별 카드</span></div>
+          <div class="arrow"><div class="lab">과목 카드 탭</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">S11</span><span class="nm">주차별 출석</span><span class="sub2">펼치기 / 접기</span></div>
+          <div class="arrow"><div class="lab">차시 탭</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">S12</span><span class="nm">차시 상세</span><span class="sub2">정정 근거 자료</span></div>
+        </div>
+      </div>
+
+      <!-- LANE 3 : 교수 -->
+      <div class="lane">
+        <div class="lane-label"><b>④ 교수자</b> Professor <span class="x">교수</span></div>
+        <div class="lane-row">
+          <div class="node"><span class="id">P-HOME</span><span class="nm">교수 홈</span><span class="sub2">오늘의 강의</span></div>
+          <div class="arrow"><div class="lab">강의 탭</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">P01</span><span class="nm">출석 시작</span><span class="sub2">인정 시간 설정</span></div>
+          <div class="arrow"><div class="lab">출석 시작 · 인증번호 생성</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">P02</span><span class="nm">실시간 대시보드</span><span class="sub2">전체·출석·지각·미처리·오류</span></div>
+          <div class="arrow"><div class="lab">학생 행 탭</div><div class="ln">→</div></div>
+          <div class="node"><span class="id">P09</span><span class="nm">학생 상태 변경</span><span class="sub2">출석/지각/결석</span></div>
+          <div class="arrow"><div class="lab">저장 · 실행취소</div><div class="ln">→</div></div>
+          <div class="node ghost"><span class="id">P02</span><span class="nm">대시보드 복귀</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="flow-legend">
+      <div class="l"><span class="bar"></span>기본 화면</div>
+      <div class="l"><span class="bar ok"></span>출석 결과</div>
+      <div class="l"><span class="bar late"></span>지각 결과</div>
+      <div class="l"><span class="bar err"></span>오류</div>
+      <div class="l"><span class="bar gh"></span>신규 / 추후 설계</div>
+      <div class="l"><b>→</b> 화살표 위 라벨 = 전환을 일으키는 조작/조건</div>
+    </div>
+  </section>
+
+  <!-- 03 ONBOARDING MOCKUPS -->
+  <section class="section">
+    <div class="section-head"><span class="n">03</span><h2>신규 화면 목업 — 운영자 세팅 · 피험자 진입</h2><span class="d">Operator Preset & Subject Entry · 390×844</span></div>
+
+    <div class="phones">
+
+      <!-- OP0 스플래시 & 디버그 진입 -->
+      <div class="phone">
+        <div class="cap">OP0 / 공통 진입점</div>
+        <div class="ttl">스플래시 · 디버그 진입</div>
+        <div class="device">
+          <div class="statusbar"><span>08:50</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+            <div style="width:96px; height:96px; border:2px solid #000; border-radius:24px; display:flex; align-items:center; justify-content:center; position:relative;">
+              <span style="font-size:11px; color:#555;">[ 로고 ]</span>
+              <span style="position:absolute; right:-10px; bottom:-10px; border:1px solid #000; background:#fff; font-size:9px; padding:1px 4px;">×5 탭</span>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:18px; font-weight:700;">전자출결</div>
+              <div class="small">로고 표시 후 3초 정지</div>
+            </div>
+            <div class="box dashed" style="position:absolute; left:8px; right:8px; bottom:10px; margin:0;">
+              <div class="small"><b>로고 5번 탭 → 디버그 모드</b> (고정 · 해제조건 없음)<br/>3초 후 → 프리셋대로 자동 진행</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OP1-학생 페르소나 & 시나리오 -->
+      <div class="phone">
+        <div class="cap">OP1 / 운영자 · 학생</div>
+        <div class="ttl">디버그 · 페르소나 (학생)</div>
+        <div class="device">
+          <div class="statusbar"><span>08:51</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">디버그 · 시나리오</div><div class="right">1/2</div></div>
+
+            <div class="box">
+              <div class="lbl">피험자 페르소나</div>
+              <div class="flex g" style="flex-wrap:wrap;"><span class="chip a">학생</span><span class="chip">교수</span></div>
+            </div>
+
+            <div class="box">
+              <div class="lbl">이름 (직접 입력)</div>
+              <div style="border:1px solid #000; padding:5px 8px; font-size:12px; color:#888; margin-bottom:6px;">이름 입력…</div>
+              <div class="flex b"><span class="small">학번</span><b>202600001</b></div>
+              <div class="flex b"><span class="small">비밀번호</span><b>1q2w3e</b></div>
+              <div class="small" style="margin-top:2px; color:#888;">계정·비번 고정</div>
+            </div>
+
+            <div class="box" style="margin-bottom:0;">
+              <div class="lbl">강의 · 시간</div>
+              <div class="flex b" style="margin-bottom:4px;"><span class="small">과목</span><b>인간-컴퓨터 상호작용 ▾</b></div>
+              <div class="flex b" style="margin-bottom:4px;"><span class="small">인정 시간</span><b>5분 · 고정</b></div>
+              <div class="flex b"><span class="small">남은 인정 시간</span><b>0:30 ▾</b></div>
+              <div class="small" style="margin-top:2px; color:#888;">5분 중 진입 시점 잔여 · 0:00=경과(지각)</div>
+            </div>
+
+            <div style="flex:1;"></div>
+            <div class="btn p" style="padding:13px; margin-bottom:0;">다음 · 기기 상태 →</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OP1-교수 페르소나 -->
+      <div class="phone">
+        <div class="cap">OP1 / 운영자 · 교수</div>
+        <div class="ttl">디버그 · 페르소나 (교수)</div>
+        <div class="device">
+          <div class="statusbar"><span>08:51</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">디버그 · 시나리오</div><div class="right">1/1</div></div>
+
+            <div class="box">
+              <div class="lbl">피험자 페르소나</div>
+              <div class="flex g" style="flex-wrap:wrap;"><span class="chip">학생</span><span class="chip a">교수</span></div>
+            </div>
+
+            <div class="box">
+              <div class="lbl">이름 (직접 입력)</div>
+              <div style="border:1px solid #000; padding:5px 8px; font-size:12px; color:#888; margin-bottom:6px;">이름 입력…</div>
+              <div class="flex b"><span class="small">사번</span><b>50001</b></div>
+              <div class="flex b"><span class="small">비밀번호</span><b>1a2s3d</b></div>
+              <div class="small" style="margin-top:2px; color:#888;">계정·비번 고정</div>
+            </div>
+
+            <div class="box dashed" style="margin-bottom:0;">
+              <div class="lbl">교수는 환경 분기 없음</div>
+              <div class="small">강의·시간·권한·환경 설정 없음. 인정시간 설정·출석 시작은 앱 내 P01에서.</div>
+            </div>
+            <div style="flex:1;"></div>
+            <div class="btn p" style="padding:13px; margin-bottom:0;">적용 &amp; 피험자에게 핸드오프</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OP2 권한 & 환경 + 핸드오프 (학생 전용) -->
+      <div class="phone">
+        <div class="cap">OP2 / 운영자 · 학생 전용</div>
+        <div class="ttl">디버그 · 권한 & 환경 · 핸드오프</div>
+        <div class="device">
+          <div class="statusbar"><span>08:52</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">디버그 · 기기 상태</div><div class="right">2/2</div></div>
+
+            <div class="box">
+              <div class="lbl">권한 초기값 · <b>피험자 변경 가능</b></div>
+              <div class="flex b" style="margin-bottom:4px;"><span>위치</span><span class="flex g"><span class="chip a">허용</span><span class="chip">거부</span></span></div>
+              <div class="flex b"><span>블루투스</span><span class="flex g"><span class="chip a">허용</span><span class="chip">거부</span></span></div>
+              <div class="small" style="margin-top:3px; color:#888;">거부로 주어도 피험자가 앱 내 토글로 켜면 정상</div>
+            </div>
+
+            <div class="box">
+              <div class="lbl">환경 상태 · <b>피험자 변경 불가</b></div>
+              <div class="flex b" style="margin-bottom:4px;"><span>강의실 위치</span><span class="flex g"><span class="chip a">내</span><span class="chip">밖</span></span></div>
+              <div class="flex b" style="margin-bottom:4px;"><span>네트워크</span><span class="flex g"><span class="chip a">정상</span><span class="chip">오류</span></span></div>
+              <div class="flex b"><span>서버</span><span class="flex g"><span class="chip a">정상</span><span class="chip">오류</span></span></div>
+            </div>
+
+            <div class="box dashed" style="margin-bottom:0;">
+              <div class="lbl">결과 미리보기</div>
+              <div class="small">모두 정상 + 정시 → <b>정상 출석</b></div>
+            </div>
+            <div style="flex:1;"></div>
+            <div class="small center" style="margin-bottom:4px; color:#888;">적용 시 기기에 저장 · 재시작해도 고정</div>
+            <div class="btn p" style="padding:13px; margin-bottom:0;">적용 &amp; 피험자에게 핸드오프</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ 운영자 프리셋 · 확정 골격 ]</div>
+        <b>진입</b> 스플래시 로고 5탭 → 디버그(고정). <b>세팅</b> OP1 페르소나·계정·과목·시간대 → OP2 권한·환경.<br/><br/>
+        <b>적용</b> 시 디버그가 숨고 기기에 <b>영구 저장</b> — 앱을 껏다 켜도 같은 프리셋으로 진입(재설정 전까지).<br/><br/>
+        <b>교수 검증 3항목</b> ① 인정시간 설정 후 출석 시작 ② 진행 중 더미 학생 출결로 카운트 실시간 증가 ③ 특정 학생 상태 변경.
+      </div>
+
+      <!-- S01 로그인 -->
+      <div class="phone">
+        <div class="cap">S01 / 공통 · 항상 노출</div>
+        <div class="ttl">로그인 (스플래시 3초 후)</div>
+        <div class="device">
+          <div class="statusbar"><span>08:56</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">로그인</div></div>
+            <div style="flex:1;"></div>
+            <div style="text-align:center;">
+              <div style="width:64px;height:64px;border:1.5px solid #000;border-radius:18px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;"><span class="small">[로고]</span></div>
+              <div style="font-size:16px;font-weight:700;">전자출결</div>
+            </div>
+            <div style="flex:1.4;"></div>
+            <div class="box"><div class="lbl">학번 / 사번</div><div style="font-size:13px;color:#888;">예: 202600001</div></div>
+            <div class="box"><div class="lbl">비밀번호</div><div style="font-size:13px;color:#888;">••••••••</div></div>
+            <div class="btn p" style="padding:14px; margin-top:4px; margin-bottom:0;">로그인</div>
+            <div class="small center" style="margin-top:8px; color:#888;">스플래시 3초 후 노출 · 프리셋 계정 자동 입력</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S-HOME 학생 홈 -->
+      <div class="phone">
+        <div class="cap">HOME / 학생</div>
+        <div class="ttl">홈 · 활성 출결 강조</div>
+        <div class="device">
+          <div class="statusbar"><span>09:02</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홍길동</div></div>
+            <div class="box" style="margin-bottom:8px; padding:6px 10px;">
+              <div class="lbl">출결 준비 상태</div>
+              <div class="flex" style="gap:16px;">
+                <span class="small">☑ 위치 권한</span>
+                <span class="small" style="color:var(--c-error);">☒ 블루투스</span>
+              </div>
+            </div>
+            <div class="box" style="border-width:2px; margin-bottom:8px; flex:1; display:flex; flex-direction:column;">
+              <div class="lbl">지금 출결 가능</div>
+              <div class="big" style="font-size:16px;">인간-컴퓨터 상호작용</div>
+              <div class="small">공대 7호관 301호</div>
+              <div class="small">인정 09:00~09:05 · 남은 <b>02:13</b></div>
+              <div style="flex:1;"></div>
+              <div class="btn" style="background:var(--c-btn); color:#fff; margin:0; padding:16px; font-size:15px;">출석체크</div>
+            </div>
+            <div class="small" style="margin-bottom:4px; color:#555;">내 수강 과목 · 수업시간 아님</div>
+            <div class="box" style="opacity:.45; margin-bottom:4px; padding:5px 8px;"><div class="flex b"><span>사용자 경험 디자인</span><span class="small">비활성</span></div></div>
+            <div class="box" style="opacity:.45; margin-bottom:0; padding:5px 8px;"><div class="flex b"><span>디자인 리서치</span><span class="small">비활성</span></div></div>
+            <div style="height:8px;"></div>
+            <div style="display:flex; border-top:1px solid #000; padding-top:6px;">
+              <div style="flex:1; text-align:center; font-size:11px; font-weight:700;">홈</div>
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">현황</div>
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S-SET 설정 -->
+      <div class="phone">
+        <div class="cap">SETTINGS / 학생</div>
+        <div class="ttl">설정 · 권한 토글 (오류 복구)</div>
+        <div class="device">
+          <div class="statusbar"><span>09:03</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">설정</div></div>
+            <div class="box dashed" style="background:#fff8d0;"><div class="small">출결 오류가 났다면 아래 권한을 켜고 다시 시도하세요.</div></div>
+            <div class="box">
+              <div class="flex b" style="margin-bottom:8px;"><span>위치 권한</span><span class="flex g"><span class="chip">OFF</span><span class="chip a">ON</span></span></div>
+              <div class="flex b"><span>블루투스</span><span class="flex g"><span class="chip a">OFF</span><span class="chip">ON</span></span></div>
+            </div>
+            <div class="small" style="color:#888;">※ 강의실 위치·네트워크·서버는 운영자만 설정 (여기 없음)</div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; border-top:1px solid #000; padding-top:6px;">
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">홈</div>
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">현황</div>
+              <div style="flex:1; text-align:center; font-size:11px; font-weight:700;">설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ 홈 · 내비게이션 · 오류 복원 ]</div>
+        로그인 후 홈: 활성 과목을 크게 강조(탭→S03), 비활성 과목은 회색.<br/><br/>
+        하단 3탭 <b>홈 / 현황(S10) / 설정</b>. 권한 토글은 설정에 있고, 오류 복구는 여기서 켜고 재시도.<br/><br/>
+        한 번 오류가 나면 해당 과목 재진입 시 <b>마지막 오류 화면(S07)</b>이 복원된다.
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 SPEC / DECISION TABLE -->
+  <section class="section">
+    <div class="section-head"><span class="n">04</span><h2>동작 명세 — 상황 분기표</h2><span class="d">Environment → Outcome</span></div>
+
+    <div class="dnotes" style="grid-template-columns: 1.5fr 1fr; align-items:start;">
+      <div class="dn">
+        <div class="h">출결 버튼 판정 규칙 · 위에서부터 첫 매칭 적용</div>
+        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:8px;">
+          <thead>
+            <tr style="border-bottom:1.5px solid #000; text-align:left;">
+              <th style="padding:4px 4px; width:18px;">#</th><th style="padding:4px 4px;">조건 (운영자 설정)</th><th style="padding:4px 4px;">결과</th><th style="padding:4px 4px;">코드 · 화면</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px dashed #888;"><td style="padding:5px 4px;">0</td><td style="padding:5px 4px;">강의실 밖</td><td style="padding:5px 4px;"><span class="pill none">차단</span></td><td style="padding:5px 4px;">버튼 비활성</td></tr>
+            <tr style="border-bottom:1px dashed #888;"><td style="padding:5px 4px;">1</td><td style="padding:5px 4px;">위치 권한 거부</td><td style="padding:5px 4px;"><span class="pill error">오류</span></td><td style="padding:5px 4px;">PERM-03 · S07</td></tr>
+            <tr style="border-bottom:1px dashed #888;"><td style="padding:5px 4px;">2</td><td style="padding:5px 4px;">블루투스 거부</td><td style="padding:5px 4px;"><span class="pill error">오류</span></td><td style="padding:5px 4px;">BT-05 · S07</td></tr>
+            <tr style="border-bottom:1px dashed #888;"><td style="padding:5px 4px;">3</td><td style="padding:5px 4px;">네트워크 오류</td><td style="padding:5px 4px;"><span class="pill error">오류</span></td><td style="padding:5px 4px;">NET-02 · S07</td></tr>
+            <tr style="border-bottom:1px dashed #888;"><td style="padding:5px 4px;">4</td><td style="padding:5px 4px;">서버 오류</td><td style="padding:5px 4px;"><span class="pill error">오류</span></td><td style="padding:5px 4px;">SRV-04 · S07</td></tr>
+            <tr style="border-bottom:1px dashed #888;"><td style="padding:5px 4px;">5</td><td style="padding:5px 4px;">모두 정상 + 정시</td><td style="padding:5px 4px;"><span class="pill attend">출석</span></td><td style="padding:5px 4px;">S05</td></tr>
+            <tr><td style="padding:5px 4px;">6</td><td style="padding:5px 4px;">모두 정상 + 지각</td><td style="padding:5px 4px;"><span class="pill late">지각</span></td><td style="padding:5px 4px;">S06</td></tr>
+          </tbody>
+        </table>
+        <div class="small" style="margin-top:8px; color:#555;">※ 단순 버튼 기준. 오류는 여러 결함이 동시에 있어도 위 우선순위로 첫 코드만 표시(정상 항목은 숨김).</div>
+      </div>
+
+      <div class="dn">
+        <div class="h">오류 복구 &amp; 공통 규칙</div>
+        <ul style="margin-top:6px;">
+          <li><b>재시도</b> → 현재 환경 재평가 (운영자가 안 바꾸면 같은 오류).</li>
+          <li><b>인증번호</b>는 오류 후에만 입력 가능 (fallback).</li>
+          <li>인증번호 성공 → <b>최초 시도 시각</b> 기준 판정<br/>&nbsp;&nbsp;· 정시였으면 → 출석(S13) · 지각이었으면 → 지각(S14)</li>
+          <li><b>사후확인(Task 3)</b>은 환경과 무관 · 항상 접근 · 더미 주차별 기록 제공.</li>
+          <li><b>교수</b>는 환경 분기 없이 — 출석 시작 → 대시보드(더미 실시간 증가) → 상태 변경.</li>
+        </ul>
+        <div class="small" style="margin-top:8px; border-top:1px dashed #888; padding-top:6px; color:#555;">오류 코드는 교수 대시보드·차시 상세(S12)에도 동일하게 노출되어 정정 근거로 쓰인다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 EXISTING SCREEN MOCKUPS -->
+  <section class="section">
+    <div class="section-head"><span class="n">05</span><h2>화면 목업 — 학생 · 교수</h2><span class="d">14 screens · 기존 v0.3 재사용</span></div>
+    <div style="border:1px solid #000; padding:8px 12px; margin-bottom:14px; font-size:12px; background:#fafafa;"><b>규칙 반영 안내:</b> 표시 시각은 예시이며 실제로는 §5.1 <b>동적 계산</b> · 대기 큐 <b>7→0</b> · 인증번호 <b>고정 7301</b> · 오류 후 재진입 시 <b>마지막 오류 화면 복원</b>. 상세 → <a href="전자출결 명세서 v1.html" style="color:#1e6fd9;">명세서</a></div>
+
+<div class="phones">
+      <!-- P-HOME 교수 홈 -->
+      <div class="phone">
+        <div class="cap">P-HOME / 교수자</div>
+        <div class="ttl">교수 홈 · 오늘의 강의</div>
+        <div class="device">
+          <div class="statusbar"><span>08:57</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결 교수</div><div class="right">홍교수</div></div>
+            <div class="box" style="border-width:2px; margin-bottom:8px; flex:1; display:flex; flex-direction:column;">
+              <div class="lbl">오늘의 강의</div>
+              <div class="big" style="font-size:16px;">인간-컴퓨터 상호작용</div>
+              <div class="small">공대 7호관 301호</div>
+              <div class="small">09:00 ~ 10:15</div>
+              <div style="flex:1;"></div>
+              <div class="btn" style="background:var(--c-btn); color:#fff; margin:0; padding:16px; font-size:15px;">출석 시작하기 →</div>
+            </div>
+            <div class="small" style="margin-bottom:4px; color:#555;">다음 강의</div>
+            <div class="box" style="opacity:.5; margin-bottom:0; padding:5px 8px;"><div class="flex b"><span>사용자 경험 디자인</span><span class="small">11:00</span></div></div>
+            <div class="small center" style="margin-top:8px; color:#888;">탭 → 출석 시작 화면(SCREEN 01)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 01 / 교수자</div>
+        <div class="ttl">출석 시작 · 인정시간 설정</div>
+        <div class="device">
+          <div class="statusbar"><span>08:58</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결 교수자</div><div class="right">홈</div></div>
+            <div class="box">
+              <div class="lbl">오늘의 강의</div>
+              <div class="big">인간-컴퓨터 상호작용</div>
+              <hr/>
+              <div>공대 7호관 301호</div>
+              <div>09:00 ~ 10:15</div>
+            </div>
+            <div class="box dashed">
+              <div class="lbl">다음 강의</div>
+              사용자 경험 디자인 · 11:00
+            </div>
+            <div class="box dashed">
+              <div class="lbl">출결 정책</div>
+              <div class="small">· 인정 시간: 출석 시작 후 설정한 분 동안</div>
+              <div class="small">· 인정 시간 이후 시도 → 지각</div>
+              <div class="small">· 오류 시 인증번호 fallback 제공</div>
+            </div>
+
+            <div style="flex:1;"></div>
+
+            <div class="box">
+              <div class="flex b" style="margin-bottom:4px;">
+                <span class="small">출결 인정 시간</span>
+                <span class="small" style="color:#888;">기본 5분</span>
+              </div>
+              <div class="flex b" style="gap:6px;">
+                <div style="width:32px; height:32px; border:1px solid #000; text-align:center; line-height:30px; font-size:16px; font-weight:700;">−</div>
+                <div style="flex:1; border:1px solid #000; text-align:center; padding:6px 0; font-size:16px; font-weight:700;">5 분</div>
+                <div style="width:32px; height:32px; border:1px solid #000; text-align:center; line-height:30px; font-size:16px; font-weight:700;">+</div>
+              </div>
+              <div class="flex g" style="margin-top:4px; flex-wrap:wrap;">
+                <span class="chip">3분</span>
+                <span class="chip a">5분</span>
+                <span class="chip">10분</span>
+                <span class="chip">15분</span>
+              </div>
+            </div>
+
+            <div class="small center" style="margin-bottom:6px;">[출석 시작]을 누른 시각부터<br/>위에서 설정한 분만큼 인정됩니다.</div>
+            <div class="btn" style="background: var(--c-btn); color:#fff; padding:16px; font-size:14px; margin-bottom:0;">출석 시작</div>
+            <div class="small center" style="margin-top:6px; color:#888;">↑ 엄지존 배치</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 02 / 교수자</div>
+        <div class="ttl">실시간 출석 대시보드</div>
+        <div class="device">
+          <div class="statusbar"><span>09:02</span><span>· · ·</span></div>
+          <div class="screen">
+            <div class="sh"><div class="back">←</div><div class="ttl">인간-컴퓨터 상호작용</div></div>
+            <div class="flex b" style="margin-bottom:6px;">
+              <div class="small">출석 진행 중</div>
+              <div><b>남은 04:32</b></div>
+            </div>
+            <div class="box dashed">
+              <div class="flex b"><span class="small">인증번호 (fallback)</span><b style="font-size:18px; letter-spacing:4px;">7301</b></div>
+              <div class="small">오류 발생 학생에게만 사용</div>
+            </div>
+            <div class="sum">
+              <div class="c">전체<b>40</b></div>
+              <div class="c attend">출석<b>30</b></div>
+              <div class="c late">지각<b>3</b></div>
+              <div class="c none">미처리<b>5</b></div>
+              <div class="c error">오류<b>2</b></div>
+            </div>
+            <div class="small" style="margin-bottom:4px;">※ 실시간 화면에는 결석 탭 없음 · 타이머에 따라 미처리→출석/오류/지각 자동 증가(시뮬)</div>
+            <div class="flex g" style="flex-wrap:wrap; margin-bottom:6px;">
+              <span class="chip a">전체</span>
+              <span class="chip">출석</span>
+              <span class="chip">지각</span>
+              <span class="chip">미처리</span>
+              <span class="chip">오류</span>
+            </div>
+            <div class="inp">🔍 이름 또는 학번 검색</div>
+            <div class="small" style="margin-bottom:4px;">정렬: 오류→지각→미처리→출석 · 동순위 이름 오름차순 · <b>행 탭 → 변경(09)</b></div>
+            <div class="stu">
+              <div>박지호<span class="id">202600032</span></div>
+              <div class="right"><span class="pill error">오류</span><span class="small">›</span></div>
+            </div>
+            <div class="stu">
+              <div>전지안<span class="id">202600019</span></div>
+              <div class="right"><span class="pill late">지각</span><span class="small">›</span></div>
+            </div>
+            <div class="stu">
+              <div>안소율<span class="id">202600016</span></div>
+              <div class="right"><span class="pill none">미처리</span><span class="small">›</span></div>
+            </div>
+            <div class="stu">
+              <div>김민준<span class="id">202600001</span></div>
+              <div class="right"><span class="pill attend">출석</span><span class="small">›</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 09 / 교수자</div>
+        <div class="ttl">학생 출석 정보 변경</div>
+        <div class="device">
+          <div class="statusbar"><span>09:14</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">학생 상태 변경</div></div>
+
+            <div class="box">
+              <div class="flex b">
+                <div>
+                  <div class="big">전지안</div>
+                  <div class="small">202600019</div>
+                </div>
+                <span class="pill none">미처리</span>
+              </div>
+              <hr/>
+              <div class="flex b"><span class="small">현재 상태</span><b>미처리</b></div>
+              <div class="flex b"><span class="small">최초 시도 시각</span><b>—</b></div>
+              <div class="flex b"><span class="small">오류 코드</span><b>—</b></div>
+            </div>
+
+            <div class="small" style="margin-top:8px;">※ 상세 페이지 이동 없이 대시보드 리스트에서<br/>특정 학생을 누르면 바로 이 화면이 열린다.</div>
+
+            <div style="flex:1;"></div>
+
+            <div class="box dashed" style="margin-bottom:8px;">
+              <div class="lbl">CONFIRMATION</div>
+              상태가 <b>‘지각’</b>으로 변경되었습니다.
+              <div style="height:4px;"></div>
+              <div class="btn s" style="border-style:dashed; margin-bottom:0;">실행 취소</div>
+            </div>
+
+            <div class="small" style="margin-bottom:4px;">상태 변경</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px;">
+              <div class="btn" style="background:var(--c-attend); color:#fff; padding:22px 6px; margin:0;">출석</div>
+              <div class="btn" style="background:var(--c-late); padding:22px 6px; margin:0;">지각</div>
+              <div class="btn" style="background:var(--c-error); color:#fff; padding:22px 6px; margin:0;">결석</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ DESIGN NOTE ]</div>
+        실시간 화면은 ‘결석’ 탭을 제외하고 ‘미처리’만 둔다.<br/><br/>
+        오류 학생은 별도 화면이 아니라 <b>‘오류’ 필터 탭</b>으로 확인하고, 행을 탭하면 <b>학생 변경 화면(09)</b>에서 직접 조치한다.
+      </div>
+    </div>
+
+    <!-- ROW: Student basic flow (3, 4) -->
+    <div class="phones">
+      <div class="phone">
+        <div class="cap">SCREEN 03 / 학생</div>
+        <div class="ttl">메인 출결 화면</div>
+        <div class="device">
+          <div class="statusbar"><span>09:00</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div>공대 7호관 301호</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05</div>
+              </div>
+              <div class="box dashed" style="margin-bottom:0;">
+                <div class="lbl">현재 상태</div>
+                출결 가능
+              </div>
+            </div>
+            <div class="s-mid">
+              <div style="position:absolute; left:8px; right:8px; top:194px; text-align:center;">
+                <div class="small">남은 출석 인정 시간</div>
+                <div style="font-size:20px; font-weight:700;">03:21</div>
+              </div>
+              <div class="big-circle blue">출석체크</div>
+            </div>
+            <div class="s-bot">
+              <div class="small center">강의실 안에서 출결 버튼을 눌러주세요.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 04 / 학생</div>
+        <div class="ttl">출결 진행 중</div>
+        <div class="device">
+          <div class="statusbar"><span>09:00</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05</div>
+              </div>
+              <div class="box dashed center" style="margin-bottom:0;">
+                <div class="lbl">대기 큐</div>
+                <b>현재 대기 순번: 7번</b>
+              </div>
+            </div>
+            <div class="s-mid">
+              <div style="position:absolute; left:8px; right:8px; top:194px; text-align:center;">
+                <div class="small">남은 출석 인정 시간</div>
+                <div style="font-size:20px; font-weight:700;">03:18</div>
+              </div>
+              <div class="big-circle loading">
+                <div style="font-size:14px;">출결 진행 중</div>
+                <div class="sub">⟳</div>
+              </div>
+            </div>
+            <div class="s-bot">
+              <div class="small center">처리 결과가 도착하면 자동으로 표시됩니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 05 / 학생</div>
+        <div class="ttl">출석 완료</div>
+        <div class="device">
+          <div class="statusbar"><span>09:03</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05</div>
+              </div>
+              <div class="box" style="margin-bottom:0;">
+                <div class="flex b"><span class="small">처리 시각</span><b>09:03</b></div>
+                <hr/>
+                <div class="flex b"><span class="small">처리 방식</span><b>자동 출석</b></div>
+              </div>
+            </div>
+            <div class="s-mid">
+              <div class="big-circle green">출석 완료</div>
+            </div>
+            <div class="s-bot">
+              <div class="small center">정상적으로 출석 처리되었습니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ DESIGN NOTE ]</div>
+        메인 화면(03) → 진행 중(04) → 결과(05)가 <b>모두 동일한 레이아웃</b>이다.<br/><br/>
+        중앙 원형 버튼의 색상·텍스트만 바뀌므로 학생은 시선을 옮길 필요 없이 결과를 인지할 수 있다.
+      </div>
+    </div>
+
+    <!-- ROW: Student late + error + auth (6, 7, 8) -->
+    <div class="phones">
+      <div class="phone">
+        <div class="cap">SCREEN 06-A / 학생</div>
+        <div class="ttl">지각 메인 화면</div>
+        <div class="device">
+          <div class="statusbar"><span>09:08</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div>공대 7호관 301호</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05 <b>종료</b></div>
+              </div>
+              <div class="box dashed" style="margin-bottom:0;">
+                <div class="lbl">현재 상태</div>
+                출결 가능 (지각 처리)
+              </div>
+            </div>
+            <div class="s-mid">
+              <div style="position:absolute; left:8px; right:8px; top:194px; text-align:center;">
+                <div class="small">출석 인정 시간</div>
+                <div style="font-size:20px; font-weight:700;">지남</div>
+              </div>
+              <div class="big-circle blue">출석체크</div>
+            </div>
+            <div class="s-bot">
+              <div class="small center">지금 누르면 지각으로 처리됩니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 06 / 학생</div>
+        <div class="ttl">지각 처리</div>
+        <div class="device">
+          <div class="statusbar"><span>09:08</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05 <b>종료</b></div>
+              </div>
+              <div class="box" style="margin-bottom:0;">
+                <div class="flex b"><span class="small">처리 시각</span><b>09:08</b></div>
+                <hr/>
+                <div class="flex b"><span class="small">판정</span><b>인정 시간 이후</b></div>
+              </div>
+            </div>
+            <div class="s-mid">
+              <div class="big-circle yellow">지각<br/>처리됨</div>
+            </div>
+            <div class="s-bot">
+              <div class="small center">인정 시간이 지난 후 처리되어 지각으로 기록되었습니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 07 / 학생</div>
+        <div class="ttl">출결 오류</div>
+        <div class="device">
+          <div class="statusbar"><span>09:01</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05</div>
+              </div>
+              <div class="box" style="margin-bottom:0;">
+                <div class="flex b"><span class="small">오류 코드</span><b>PERM-03</b></div>
+                <hr/>
+                <div>위치 권한이 꺼져 있습니다. 설정에서 켜고 재시도하세요.</div>
+              </div>
+              <div class="box dashed" style="background:#fff8d0; margin-bottom:0;">
+                <div class="lbl" style="margin-bottom:4px;">✓ 안심하세요</div>
+                <div class="flex b"><span class="small">최초 시도 시각 기록됨</span><b>09:01</b></div>
+                <div class="small" style="margin-top:4px;">출석체크 완료 시 이 시각 기준으로 판정됩니다.</div>
+              </div>
+            </div>
+            <div class="s-mid">
+              <div class="big-circle red">출결 오류</div>
+            </div>
+            <div class="s-bot">
+              <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                <div class="btn" style="flex:1; padding:12px; margin:0;">재시도</div>
+                <div class="btn p" style="flex:1; padding:12px; margin:0;">인증번호 입력</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 08 / 학생</div>
+        <div class="ttl">인증번호 입력</div>
+        <div class="device">
+          <div class="statusbar"><span>09:02</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">인증번호 출결</div></div>
+
+            <div class="box dashed" style="background:#fff8d0;">
+              <div class="flex b"><span class="small">최초 시도 시각</span><b>09:01</b></div>
+              <div class="small">이 시각 기준으로 출석/지각 자동 판정</div>
+            </div>
+
+            <div style="flex:1;"></div>
+
+            <div class="center" style="margin-bottom:8px;">
+              <b>교수자가 칠판에 적은</b><br/>
+              <b>4자리 인증번호</b>를 입력하세요.
+            </div>
+            <div class="pin" style="margin: 0 0 16px;">
+              <div class="b">_</div>
+              <div class="b">_</div>
+              <div class="b">_</div>
+              <div class="b">_</div>
+            </div>
+
+            <div style="flex:1;"></div>
+
+            <div class="small center" style="margin-bottom:6px; color:#888;">↓ 엄지존 키패드</div>
+            <div class="keypad" style="margin-bottom:0;">
+              <div class="k" style="padding:10px 0;">1</div><div class="k" style="padding:10px 0;">2</div><div class="k" style="padding:10px 0;">3</div>
+              <div class="k" style="padding:10px 0;">4</div><div class="k" style="padding:10px 0;">5</div><div class="k" style="padding:10px 0;">6</div>
+              <div class="k" style="padding:10px 0;">7</div><div class="k" style="padding:10px 0;">8</div><div class="k" style="padding:10px 0;">9</div>
+              <div class="k" style="padding:10px 0;">지우기</div><div class="k" style="padding:10px 0;">0</div><div class="k" style="padding:10px 0; background:var(--c-btn); color:#fff;">확인</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ DESIGN NOTE ]</div>
+        지각(06)/오류(07)/인증(08)은 같은 시간축의 분기.<br/><br/>
+        인증번호 입력 화면(08)으로 이동해도, 판정은 <b>최초 시도 시각</b>으로 거슬러 계산하여 공정성을 유지한다.
+      </div>
+    </div>
+
+    <!-- ROW: 인증번호 입력 결과 (13, 14) -->
+    <div class="phones">
+      <div class="phone">
+        <div class="cap">SCREEN 13 / 학생</div>
+        <div class="ttl">인증번호 입력 → 출석 완료</div>
+        <div class="device">
+          <div class="statusbar"><span>09:03</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05</div>
+              </div>
+              <div class="box" style="margin-bottom:0;">
+                <div class="flex b"><span class="small">처리 시각</span><b>09:03</b></div>
+                <hr/>
+                <div class="flex b"><span class="small">처리 방식</span><b>인증번호 출석</b></div>
+                <hr/>
+                <div class="flex b"><span class="small">최초 시도 시각</span><b>09:01</b></div>
+              </div>
+            </div>
+            <div class="s-mid">
+              <div class="big-circle green">출석 완료</div>
+            </div>
+            <div class="s-bot">
+              <div class="box dashed" style="background:#fff8d0; margin:0; width:100%;">
+                <div class="small">최초 시도 시각이 <b>인정 시간 내</b>였기 때문에 오류가 있었지만 <b>출석</b>으로 처리되었습니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 14 / 학생</div>
+        <div class="ttl">인증번호 입력 → 지각 처리</div>
+        <div class="device">
+          <div class="statusbar"><span>09:08</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="ttl">전자출결</div><div class="right">홈</div></div>
+            <div class="s-top">
+              <div class="box" style="margin-bottom:0;">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <div class="small">출석 인정 시간: 09:00 ~ 09:05 <b>종료</b></div>
+              </div>
+              <div class="box" style="margin-bottom:0;">
+                <div class="flex b"><span class="small">처리 시각</span><b>09:08</b></div>
+                <hr/>
+                <div class="flex b"><span class="small">처리 방식</span><b>인증번호 지각</b></div>
+                <hr/>
+                <div class="flex b"><span class="small">최초 시도 시각</span><b>09:07</b></div>
+              </div>
+            </div>
+            <div class="s-mid">
+              <div class="big-circle yellow">지각<br/>처리됨</div>
+            </div>
+            <div class="s-bot">
+              <div class="box dashed" style="background:#fff8d0; margin:0; width:100%;">
+                <div class="small">최초 시도 시각이 <b>인정 시간 이후</b>였기 때문에 인증번호 입력이 성공해도 <b>지각</b>으로 기록됩니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ DESIGN NOTE ]</div>
+        결과 화면(13/14)은 SCREEN 05/06과 동일한 레이아웃을 따른다.<br/><br/>
+        차이는 <b>‘처리 방식’</b>이 ‘인증번호 출석/지각’으로 표기되고, <b>‘최초 시도 시각’</b>이 추가된다는 점.<br/><br/>
+        이는 사후 확인(12)에서도 동일하게 노출되어 정정 요청의 근거가 된다.
+      </div>
+    </div>
+
+    <!-- ROW: History (10, 11, 12) -->
+    <div class="phones">
+      <div class="phone">
+        <div class="cap">SCREEN 10 / 학생</div>
+        <div class="ttl">출석 현황 요약</div>
+        <div class="device">
+          <div class="statusbar"><span>22:14</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">출석 현황</div></div>
+            <div class="box dashed" style="background:#fff8d0;">
+              <div class="lbl">⚠ 출결 유의사항</div>
+              총 수업 시수의 <b>1/4 이상 결석 시 F</b> 처리됩니다.
+            </div>
+            <div class="small" style="margin-bottom:6px;">2026년 1학기 · 과목 카드 탭 → 주차별 화면(11) · 전체=총 차시(15주 기준)</div>
+            <div class="box">
+              <div class="flex b">
+                <div class="big">인간-컴퓨터 상호작용</div>
+                <span class="small">›</span>
+              </div>
+              <hr/>
+              <div class="flex b" style="font-size:11px;">
+                <span><span class="pill none">전체</span> <b>30</b></span>
+                <span><span class="pill attend">출석</span> <b>8</b></span>
+                <span><span class="pill late">지각</span> <b>1</b></span>
+                <span><span class="pill error">결석</span> <b>1</b></span>
+              </div>
+              <hr/>
+              <div class="flex b"><span class="small">현재 상태</span><span class="pill late">주의</span></div>
+            </div>
+            <div class="box">
+              <div class="flex b">
+                <div class="big">사용자 경험 디자인</div>
+                <span class="small">›</span>
+              </div>
+              <hr/>
+              <div class="flex b" style="font-size:11px;">
+                <span><span class="pill none">전체</span> <b>15</b></span>
+                <span><span class="pill attend">출석</span> <b>9</b></span>
+                <span><span class="pill late">지각</span> <b>0</b></span>
+                <span><span class="pill error">결석</span> <b>0</b></span>
+              </div>
+              <hr/>
+              <div class="flex b"><span class="small">현재 상태</span><span class="pill attend">정상</span></div>
+            </div>
+            <div class="box">
+              <div class="flex b">
+                <div class="big">디자인 리서치</div>
+                <span class="small">›</span>
+              </div>
+              <hr/>
+              <div class="flex b" style="font-size:11px;">
+                <span><span class="pill none">전체</span> <b>15</b></span>
+                <span><span class="pill attend">출석</span> <b>7</b></span>
+                <span><span class="pill late">지각</span> <b>2</b></span>
+                <span><span class="pill error">결석</span> <b>0</b></span>
+              </div>
+              <hr/>
+              <div class="flex b"><span class="small">현재 상태</span><span class="pill attend">정상</span></div>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; border-top:1px solid #000; padding-top:6px;">
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">홈</div>
+              <div style="flex:1; text-align:center; font-size:11px; font-weight:700;">현황</div>
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 11 / 학생</div>
+        <div class="ttl">주차별 출석 (펼치기/접기)</div>
+        <div class="device">
+          <div class="statusbar"><span>22:15</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">인간-컴퓨터 상호작용</div></div>
+
+            <div class="small" style="margin-bottom:4px;">범례</div>
+            <div class="flex g" style="flex-wrap:wrap; margin-bottom:6px;">
+              <span class="pill attend">출석</span>
+              <span class="pill late">지각</span>
+              <span class="pill error">결석</span>
+              <span class="pill none">미처리</span>
+            </div>
+            <div class="box dashed small" style="margin-bottom:10px;">주차를 누르면 차시별 출결을 확인할 수 있고,<br/>차시를 누르면 상세 화면(12)으로 이동합니다.</div>
+
+            <!-- 1주차: 닫힘 -->
+            <div class="wk"><div class="l"><span class="small">▶</span> 1주차</div><span class="small">출석 2 · 지각 0 · 결석 0</span></div>
+
+            <!-- 2주차: 닫힘 -->
+            <div class="wk"><div class="l"><span class="small">▶</span> 2주차</div><span class="small">출석 2 · 지각 0 · 결석 0</span></div>
+
+            <!-- 3주차: 펼침 (예시) -->
+            <div class="wk" style="border-bottom: none; margin-bottom:0;">
+              <div class="l"><span class="small">▼</span> <b>3주차</b></div>
+              <span class="small">출석 1 · 지각 1 · 결석 0</span>
+            </div>
+            <div style="border:1px solid #000; border-top:none; padding:6px 8px; margin-bottom:4px; background:#fafafa;">
+              <div class="flex b" style="font-size:11px; padding:3px 0;">
+                <span>1차시 · 2026.05.19</span>
+                <span class="pill attend">출석</span>
+              </div>
+              <hr style="margin:4px 0;"/>
+              <div class="flex b" style="font-size:11px; padding:3px 0;">
+                <span>2차시 · 2026.05.21</span>
+                <span class="pill late">지각</span>
+              </div>
+            </div>
+
+            <!-- 4주차: 닫힘 -->
+            <div class="wk"><div class="l"><span class="small">▶</span> 4주차</div><span class="small">출석 2 · 지각 0 · 결석 0</span></div>
+
+            <!-- 5주차: 닫힘 -->
+            <div class="wk"><div class="l"><span class="small">▶</span> 5주차</div><span class="small">출석 1 · 지각 0 · 결석 1</span></div>
+
+            <!-- 6주차: 닫힘 -->
+            <div class="wk"><div class="l"><span class="small">▶</span> 6주차</div><span class="small">미처리 / 진행 예정</span></div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; border-top:1px solid #000; padding-top:6px;">
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">홈</div>
+              <div style="flex:1; text-align:center; font-size:11px; font-weight:700;">현황</div>
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="cap">SCREEN 12 / 학생</div>
+        <div class="ttl">특정 주차 상세 (차시별)</div>
+        <div class="device">
+          <div class="statusbar"><span>22:16</span><span>· · ·</span></div>
+          <div class="screen" style="display:flex; flex-direction:column;">
+            <div class="sh"><div class="back">←</div><div class="ttl">3주차 출석 상세</div></div>
+
+            <div class="small" style="margin-bottom:4px;">인간-컴퓨터 상호작용 · 주차 요약</div>
+            <div class="box dashed" style="margin-bottom:10px;">
+              <div class="flex b"><span class="small">3주차</span><span class="small">출석 1 · 지각 1 · 결석 0</span></div>
+            </div>
+
+            <!-- 1차시 -->
+            <div class="box">
+              <div class="flex b" style="margin-bottom:4px;">
+                <div><b>1차시</b> <span class="small">· 2026.05.19</span></div>
+                <span class="pill attend">출석</span>
+              </div>
+              <hr/>
+              <div class="flex b"><span class="small">처리 시각</span><b>09:03</b></div>
+              <div class="flex b"><span class="small">최초 시도 시각</span><b>09:01</b></div>
+              <div class="flex b"><span class="small">처리 방식</span><b>인증번호 출석</b></div>
+              <div class="flex b"><span class="small">오류 발생</span><b>있음 · PERM-03</b></div>
+            </div>
+
+            <!-- 2차시 -->
+            <div class="box">
+              <div class="flex b" style="margin-bottom:4px;">
+                <div><b>2차시</b> <span class="small">· 2026.05.21</span></div>
+                <span class="pill late">지각</span>
+              </div>
+              <hr/>
+              <div class="flex b"><span class="small">처리 시각</span><b>09:08</b></div>
+              <div class="flex b"><span class="small">최초 시도 시각</span><b>09:07</b></div>
+              <div class="flex b"><span class="small">처리 방식</span><b>인증번호 지각</b></div>
+              <div class="flex b"><span class="small">오류 발생</span><b>있음 · NET-02</b></div>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; border-top:1px solid #000; padding-top:6px;">
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">홈</div>
+              <div style="flex:1; text-align:center; font-size:11px; font-weight:700;">현황</div>
+              <div style="flex:1; text-align:center; font-size:11px; color:#999;">설정</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="h">[ DESIGN NOTE ]</div>
+        사후 확인은 ‘요약(10) → 주차별 리스트(11) → 상세(12)’의 3단계 깊이로 정리.<br/><br/>
+        상세 화면(12)은 정정 요청의 <b>근거 자료</b>로 활용되도록 처리 시각·방식·오류 여부를 모두 보여준다.
+      </div>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span>HCI · Flow Wireframe Board · 전자출결 시스템</span>
+    <span>STAGE 1 — v1.0</span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>전자출결 — 기능 명세서</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #f6f6f4; color: #111;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 15px; line-height: 1.62;
+  }
+  .doc { max-width: 940px; margin: 0 auto; background: #fff; border-left: 1px solid #ddd; border-right: 1px solid #ddd; padding: 56px 64px 120px; }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 21px; margin: 44px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #111; }
+  h3 { font-size: 16px; margin: 26px 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 5px; }
+  code { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: #f0f0ee; padding: 1px 5px; border-radius: 3px; }
+  .meta { font-size: 13px; color: #666; }
+  .kick { font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #888; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
+
+  .callout { border: 1px solid #111; padding: 14px 16px; margin: 14px 0; background: #fafafa; }
+  .callout .lbl { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #666; margin-bottom: 6px; }
+  .callout.key { border-left: 5px solid #111; }
+  .callout.warn { border-left: 5px solid #c0392b; }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  th, td { border: 1px solid #ccc; padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: #f2f2f0; font-weight: 700; }
+  td code { font-size: 12.5px; }
+
+  pre { background: #1c1c1c; color: #eee; padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.55; margin: 12px 0; }
+  pre .c { color: #7f9; } pre .k { color: #9cf; } pre .m { color: #888; }
+
+  .toc { border: 1px solid #ddd; background: #fafafa; padding: 18px 22px; margin: 24px 0 8px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, auto); gap: 4px 36px; font-size: 14px; }
+  .toc a { color: #111; text-decoration: none; display: block; margin-bottom: 4px; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .num { color: #999; font-family: "JetBrains Mono", monospace; font-size: 12px; margin-right: 6px; }
+
+  .pill { display: inline-block; border: 1px solid #111; border-radius: 3px; padding: 0 6px; font-size: 12px; }
+  .pill.ok { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  .pill.late { background: #d6a200; color: #111; border-color: #d6a200; }
+  .pill.err { background: #c0392b; color: #fff; border-color: #c0392b; }
+  .pill.block { background: #555; color: #fff; border-color: #555; }
+  .tag { display:inline-block; font-family:"JetBrains Mono",monospace; font-size:11px; border:1px solid #bbb; border-radius:3px; padding:1px 6px; color:#555; margin-right:4px; }
+  .todo { color:#c0392b; font-weight:700; }
+  .footer { margin-top: 56px; border-top: 1px solid #ddd; padding-top: 12px; font-size: 12px; color: #888; display:flex; justify-content:space-between; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="kick">HCI TEAM PROJECT · C팀 · 2026</div>
+  <h1>전자출결 시스템 — 기능 명세서</h1>
+  <p class="meta">크로스플랫폼(iOS · Android) 테스트 빌드 · 운영자 프리셋 방식 · <b>이 문서가 단일 기준(source of truth)</b>이며, 와이어프레임/목업의 설명은 모두 이 문서를 따른다.</p>
+  <p class="meta">버전 v1.0 · 대상: 구현(클로드 코드) 핸드오프 · 동반 문서: <code>Flow Wireframe v1.html</code></p>
+
+  <div class="toc">
+    <a href="#s1"><span class="num">1</span>시스템 개요 · 테스트 모델</a>
+    <a href="#s2"><span class="num">2</span>페르소나 · 계정</a>
+    <a href="#s3"><span class="num">3</span>디버그 진입 · 운영자 프리셋</a>
+    <a href="#s4"><span class="num">4</span>권한 vs 환경 모델 (핵심)</a>
+    <a href="#s5"><span class="num">5</span>시간 모델</a>
+    <a href="#s6"><span class="num">6</span>출결 판정 로직</a>
+    <a href="#s7"><span class="num">7</span>오류 처리 · Fallback</a>
+    <a href="#s8"><span class="num">8</span>학생 플로우 · 화면 동작</a>
+    <a href="#s9"><span class="num">9</span>교수 플로우 · 검증 항목</a>
+    <a href="#s10"><span class="num">10</span>사후 확인 (Task 3)</a>
+    <a href="#s11"><span class="num">11</span>화면 인벤토리</a>
+    <a href="#s12"><span class="num">12</span>데이터 · 영속성 모델</a>
+    <a href="#s13"><span class="num">13</span>미결정 · TODO</a>
+  </div>
+
+  <!-- ===================== 1 ===================== -->
+  <h2 id="s1">1. 시스템 개요 · 테스트 모델</h2>
+  <p>대학 강의용 전자출결 모바일 앱. 학생은 강의실 내에서 출석체크를 수행하고, 교수자는 실시간으로 출결 현황을 모니터링한다. 본 빌드는 실제 배포가 아니라 <b>팀 내부에서 4개 핵심 Task를 검증</b>하기 위한 단일 기기 테스트 빌드다.</p>
+
+  <h3>1.1 운영자 프리셋(Operator Preset) 방식</h3>
+  <p>실시간 교수–학생 연동이나 실제 GPS/네트워크 오류에 의존하지 않는다. 대신 <b>진행자(운영자)</b>가 앱의 숨겨진 디버그 화면에서 시나리오를 미리 세팅한 뒤 피험자에게 기기를 건넨다. 피험자는 그 프리셋대로만 앱을 사용한다. 이로써 지각·오류 등 엣지 상황을 <b>재현 가능</b>하게 만든다.</p>
+  <table>
+    <tr><th>역할</th><th>정의</th><th>행위</th></tr>
+    <tr><td><b>운영자</b> (진행자)</td><td>팀원. 테스트를 세팅·진행</td><td>디버그 진입 → 프리셋 세팅 → 적용 → 핸드오프</td></tr>
+    <tr><td><b>피험자</b> (실험 대상)</td><td>테스트 받는 사용자</td><td>건네받은 앱을 프리셋대로 수행</td></tr>
+  </table>
+
+  <h3>1.2 검증 대상 Task (Project 2)</h3>
+  <table>
+    <tr><th>Task</th><th>내용</th><th>피험자</th></tr>
+    <tr><td>T1</td><td>일반적인 출석체크 (정시)</td><td>학생</td></tr>
+    <tr><td>T2</td><td>지각한 학생의 출석체크</td><td>학생</td></tr>
+    <tr><td>T3</td><td>사후 확인 · 주차별 모니터링</td><td>학생</td></tr>
+    <tr><td>T4</td><td>오류 발생에 대한 방안</td><td>학생</td></tr>
+    <tr><td>P</td><td>교수 출결 운영 (시작·모니터링·정정)</td><td>교수</td></tr>
+  </table>
+  <div class="callout key">
+    <div class="lbl">핵심 원칙</div>
+    학생의 T1·T2·T4는 별도 Task 선택이 아니라 <b>운영자가 세팅한 환경/시간</b>이 결과를 결정한다. T3(사후확인)는 환경과 무관하게 항상 접근 가능한 공통 기능이다.
+  </div>
+
+  <!-- ===================== 2 ===================== -->
+  <h2 id="s2">2. 페르소나 · 계정</h2>
+  <p>페르소나는 <b>학생</b>과 <b>교수</b> 두 종류만 둔다. (관리자 90000은 본 빌드 범위 밖 — <span class="todo">추후</span>.)</p>
+  <table>
+    <tr><th>페르소나</th><th>ID (고정)</th><th>비밀번호 (고정)</th><th>이름</th></tr>
+    <tr><td>학생</td><td><code>202600001</code></td><td><code>1q2w3e</code></td><td>운영자가 <b>자유 입력</b></td></tr>
+    <tr><td>교수</td><td><code>50001</code></td><td><code>1a2s3d</code></td><td>운영자가 <b>자유 입력</b></td></tr>
+  </table>
+  <ul>
+    <li>ID/비밀번호는 랜덤이 아니라 위 값으로 <b>고정</b>한다.</li>
+    <li>이름은 드롭다운이 아니라 <b>텍스트 직접 입력</b>(운영자가 작성). 기본값 비워두거나 예시 placeholder.</li>
+    <li>로그인 화면은 <b>항상 노출</b>된다. 스플래시 3초 후 로그인 화면이 뜨고, 피험자가 로그인하면 시작한다. 프리셋이 있으면 해당 계정이 자동 입력될 수 있다.</li>
+  </ul>
+
+  <!-- ===================== 3 ===================== -->
+  <h2 id="s3">3. 디버그 진입 · 운영자 프리셋</h2>
+
+  <h3>3.1 진입 (고정 제스처)</h3>
+  <ol>
+    <li>앱 최초 실행 → 스플래시(로고) 표시, <b>3초 정지</b>.</li>
+    <li>스플래시에서 <b>로고를 5번 탭</b>하면 디버그 모드로 진입한다.</li>
+    <li>앱 작동 중에는 <b>좌상단 '전자출결' 타이틀을 5번 탭</b>해도 디버그로 진입한다(재부팅 불필요 · 재세팅/초기화용).</li>
+    <li>제스처는 <b>고정</b>이며 별도 해제 조건/PIN은 없다.</li>
+    <li>디버그에 진입하지 않으면 3초 후 <b>로그인 화면</b>으로 진행한다. 피험자가 로그인하면 저장된 프리셋대로 시작.</li>
+  </ol>
+
+  <h3>3.2 학생 프리셋 (OP1-학생 + OP2)</h3>
+  <table>
+    <tr><th>항목</th><th>입력</th><th>비고</th></tr>
+    <tr><td>이름</td><td>자유 입력</td><td>—</td></tr>
+    <tr><td>계정</td><td><code>202600001 / 1q2w3e</code> 고정 표시</td><td>수정 불가</td></tr>
+    <tr><td>과목</td><td>선택/고정</td><td>기본 <code>인간-컴퓨터 상호작용</code></td></tr>
+    <tr><td>남은 인정 시간</td><td><code>0:00</code> ~ <code>5:00</code></td><td>§5 시간 모델</td></tr>
+    <tr><td>위치 권한 (초기값)</td><td>허용 / 거부</td><td><b>피험자 변경 가능</b> §4.1</td></tr>
+    <tr><td>블루투스 (초기값)</td><td>허용 / 거부</td><td><b>피험자 변경 가능</b> §4.1</td></tr>
+    <tr><td>강의실 위치</td><td>내 / 밖</td><td>피험자 변경 불가 §4.2</td></tr>
+    <tr><td>네트워크</td><td>정상 / 오류</td><td>피험자 변경 불가 §4.2</td></tr>
+    <tr><td>서버</td><td>정상 / 오류</td><td>피험자 변경 불가 §4.2</td></tr>
+  </table>
+
+  <h3>3.3 교수 프리셋 (OP1-교수)</h3>
+  <p>교수는 오류 시나리오가 정의되어 있지 않다. 따라서 <b>강의·시간, 권한, 환경 설정이 없다.</b></p>
+  <table>
+    <tr><th>항목</th><th>입력</th><th>비고</th></tr>
+    <tr><td>이름</td><td>자유 입력</td><td>—</td></tr>
+    <tr><td>계정</td><td><code>50001 / 1a2s3d</code> 고정 표시</td><td>수정 불가</td></tr>
+  </table>
+  <p>인정 시간 설정·출석 시작은 디버그가 아니라 <b>앱 내 교수 플로우(P01)</b>에서 직접 수행한다(§9).</p>
+
+  <h3>3.4 데이터 영속성</h3>
+  <div class="callout key">
+    <div class="lbl">고정 저장</div>
+    [적용 &amp; 핸드오프]를 누르면 프리셋이 <b>기기에 영구 저장</b>된다. 앱을 종료하거나 재시작해도 같은 프리셋으로 진입한다 — <b>운영자가 다시 디버그에서 재설정하기 전까지 고정</b>. (구현: <code>localStorage</code> 등 기기 영속 저장소.)
+  </div>
+
+  <!-- ===================== 4 ===================== -->
+  <h2 id="s4">4. 권한 vs 환경 모델 <span style="font-size:14px;color:#888;">(가장 중요)</span></h2>
+  <p>출결 실패를 만드는 요인은 <b>두 부류</b>로 나뉘며, 피험자가 앱 안에서 고칠 수 있는지가 다르다.</p>
+
+  <h3>4.1 권한 — 위치 · 블루투스 (피험자 변경 가능)</h3>
+  <ul>
+    <li>운영자가 정하는 값은 어디까지나 <b>초기값</b>이다.</li>
+    <li>초기값이 <code>거부</code>면, 피험자는 <b>앱 내 권한 토글 버튼</b>을 눌러 <code>허용</code>으로 바꿀 수 있다(실제 OS 권한 팝업 대신, 앱 위에서만 도는 가정 토글).</li>
+    <li>권한이 <code>거부</code>인 채로 출결을 시도하면 권한 오류(<code>PERM-03</code>/<code>BT-05</code>)가 난다. 토글을 켜고 재시도하면 통과한다.</li>
+  </ul>
+
+  <h3>4.2 환경 — 강의실 · 네트워크 · 서버 (피험자 변경 불가)</h3>
+  <ul>
+    <li>피험자는 이 값들을 바꿀 수 없다. 운영자만 설정한다.</li>
+    <li><b>강의실 밖</b>: 출석체크 자체를 <b>차단</b>한다(버튼 비활성). 오류가 아니라 "강의실 밖에서는 출석할 수 없음" 안내. <span class="meta">(설계 전제: 강의실 밖 시도는 범위 밖.)</span></li>
+    <li><b>네트워크 오류 / 서버 오류</b>: 출결 시도 시 오류가 난다. 피험자가 못 고치므로 <b>인증번호 fallback</b>으로만 해결 가능(§7).</li>
+  </ul>
+
+  <table>
+    <tr><th>요인</th><th>부류</th><th>피험자 조치</th><th>실패 시</th></tr>
+    <tr><td>위치 권한</td><td>권한</td><td>앱 내 토글로 허용</td><td><span class="pill err">오류</span> PERM-03</td></tr>
+    <tr><td>블루투스</td><td>권한</td><td>앱 내 토글로 허용</td><td><span class="pill err">오류</span> BT-05</td></tr>
+    <tr><td>강의실 밖</td><td>환경</td><td>불가</td><td><span class="pill block">차단</span> 버튼 비활성</td></tr>
+    <tr><td>네트워크 오류</td><td>환경</td><td>불가 → 인증번호</td><td><span class="pill err">오류</span> NET-02</td></tr>
+    <tr><td>서버 오류</td><td>환경</td><td>불가 → 인증번호</td><td><span class="pill err">오류</span> SRV-04</td></tr>
+  </table>
+
+  <!-- ===================== 5 ===================== -->
+  <h2 id="s5">5. 시간 모델</h2>
+  <ul>
+    <li><b>인정 시간 = 5분 고정</b> (학생 프리셋에서 변경 불가, 표시용 상수).</li>
+    <li><b>남은 인정 시간(잔여)</b>은 운영자가 <code>0:00</code>~<code>5:00</code> 범위로 설정한다. 이는 피험자가 앱에 진입한 시점의 잔여 시간이다.</li>
+    <li>앱 진입 후 잔여 시간은 <b>실시간으로 카운트다운</b>된다.</li>
+    <li>출결 버튼을 누른 시점 기준: 잔여 <code>&gt; 0</code> → <span class="pill ok">출석</span> · 잔여 <code>≤ 0</code> → <span class="pill late">지각</span>.</li>
+  </ul>
+  <div class="callout">
+    <div class="lbl">예시</div>
+    인정시간 5분, 남은시간 <code>0:30</code>으로 세팅 → 피험자는 "이미 4분 30초가 지났고 남은 30초 안에 처리해야 한다"는 상황에서 시작한다. 30초 안에 누르면 출석, 넘기면 지각.
+  </div>
+  <p class="meta">운영자가 남은시간을 <code>0:00</code>(경과)로 두면 진입 즉시 지각 상황이 된다.</p>
+
+  <h3>5.1 모든 시각은 기기 시계 기준으로 동적 계산</h3>
+  <p>화면에 표시되는 시각·카운트다운은 하드코딩이 아니라 <b>피험자 기기의 현재 시각</b>에서 계산한다. 같은 프리셋이라도 테스트하는 실제 시점에 따라 숫자가 달라진다.</p>
+  <table>
+    <tr><th>대상</th><th>계산식</th><th>예시</th></tr>
+    <tr><td>교수 수업 시간</td><td><code>시작 = 현재 시각의 정시(시 단위 내림)</code><br><code>종료 = 시작 + 90분</code></td><td>now <code>22:12</code> → <code>22:00 ~ 23:30</code></td></tr>
+    <tr><td>학생 인정 window</td><td><code>종료 = now + 남은시간</code><br><code>시작 = 종료 − 5분</code><br><code>남은 = 종료 − now</code></td><td>now <code>19:43</code>, 남은 <code>2:00</code> → 인정 <code>19:40~19:45</code>, 남은 <code>02:00</code></td></tr>
+  </table>
+
+  <!-- ===================== 6 ===================== -->
+  <h2 id="s6">6. 출결 판정 로직</h2>
+  <p>학생이 출결 버튼을 누르면 아래 규칙을 <b>위에서부터 평가</b>하여 첫 번째로 매칭되는 결과를 적용한다.</p>
+  <table>
+    <tr><th>#</th><th>조건</th><th>결과</th><th>코드 / 화면</th><th>피험자 복구</th></tr>
+    <tr><td>0</td><td>강의실 밖</td><td><span class="pill block">차단</span></td><td>— / 버튼 비활성</td><td>불가</td></tr>
+    <tr><td>1</td><td>위치 권한 거부</td><td><span class="pill err">오류</span></td><td><code>PERM-03</code> / S07</td><td>권한 토글 후 재시도</td></tr>
+    <tr><td>2</td><td>블루투스 거부</td><td><span class="pill err">오류</span></td><td><code>BT-05</code> / S07</td><td>권한 토글 후 재시도</td></tr>
+    <tr><td>3</td><td>네트워크 오류</td><td><span class="pill err">오류</span></td><td><code>NET-02</code> / S07</td><td>인증번호 fallback</td></tr>
+    <tr><td>4</td><td>서버 오류</td><td><span class="pill err">오류</span></td><td><code>SRV-04</code> / S07</td><td>인증번호 fallback</td></tr>
+    <tr><td>5</td><td>모두 정상 · 잔여 &gt; 0</td><td><span class="pill ok">출석</span></td><td>S05</td><td>—</td></tr>
+    <tr><td>6</td><td>모두 정상 · 잔여 ≤ 0</td><td><span class="pill late">지각</span></td><td>S06</td><td>—</td></tr>
+  </table>
+  <p class="meta">여러 결함이 동시에 있어도 위 우선순위의 첫 코드만 노출한다(정상 항목은 숨김). 피험자가 권한을 켜면 다음 우선순위가 재평가된다.</p>
+
+  <pre><span class="c">// 출결 버튼 onPress — 의사코드</span>
+<span class="k">function</span> evaluateAttendance(env, perms, remainingSec, now) {
+  <span class="k">if</span> (env.classroom === <span class="m">'밖'</span>)      <span class="k">return</span> { type:<span class="m">'BLOCKED'</span> };       <span class="c">// 버튼은 애초에 비활성</span>
+  <span class="k">if</span> (perms.location === <span class="m">'거부'</span>)     <span class="k">return</span> { type:<span class="m">'ERROR'</span>, code:<span class="m">'PERM-03'</span> };
+  <span class="k">if</span> (perms.bluetooth === <span class="m">'거부'</span>)    <span class="k">return</span> { type:<span class="m">'ERROR'</span>, code:<span class="m">'BT-05'</span> };
+  <span class="k">if</span> (env.network === <span class="m">'오류'</span>)       <span class="k">return</span> { type:<span class="m">'ERROR'</span>, code:<span class="m">'NET-02'</span> };
+  <span class="k">if</span> (env.server === <span class="m">'오류'</span>)        <span class="k">return</span> { type:<span class="m">'ERROR'</span>, code:<span class="m">'SRV-04'</span> };
+  <span class="k">return</span> remainingSec &gt; 0
+    ? { type:<span class="m">'PRESENT'</span> }   <span class="c">// 출석</span>
+    : { type:<span class="m">'LATE'</span> };     <span class="c">// 지각</span>
+}</pre>
+
+  <!-- ===================== 7 ===================== -->
+  <h2 id="s7">7. 오류 처리 · Fallback</h2>
+  <h3>7.1 최초 시도 시각</h3>
+  <p>학생이 <b>처음 출결 버튼을 누른 시각</b>을 저장한다. 이후 오류를 복구해 뒤늦게 처리하더라도 판정은 <b>최초 시도 시각</b> 기준으로 한다(기술적 문제로 인한 불이익 방지).</p>
+
+  <h3>7.2 복구 수단</h3>
+  <table>
+    <tr><th>수단</th><th>조건</th><th>동작</th></tr>
+    <tr><td>재시도</td><td>오류 화면(S07)</td><td>현재 상태를 재평가. 운영자가 환경을 바꾸지 않았으면 같은 오류. 권한은 피험자가 켜면 통과.</td></tr>
+    <tr><td>인증번호 입력</td><td>오류 발생 후에만</td><td>교수/시스템이 자동 생성한 4자리 입력 → 성공 시 최초 시도 시각 기준 판정.</td></tr>
+  </table>
+  <ul>
+    <li>인증번호는 <b>독립 출석 수단이 아니다</b>. 오류가 난 뒤에만 활성화되는 fallback.</li>
+    <li>인증번호 성공 시: 최초 시도 시각의 잔여 &gt; 0 → <span class="pill ok">출석(S13)</span> · 잔여 ≤ 0 → <span class="pill late">지각(S14)</span>.</li>
+    <li>입력란 포커스 시 기기 기본 키패드(숫자)가 즉시 뜨도록 한다.</li>
+  </ul>
+
+  <!-- ===================== 8 ===================== -->
+  <h2 id="s8">8. 학생 플로우 · 화면 동작</h2>
+
+  <h3>8.1 내비게이션 (하단 3탭)</h3>
+  <p><b>홈 · 현황 · 설정</b> 3개 탭으로 구성한다. <b>모든 학생 화면 하단에 고정 노출</b>(출결 태스크 흐름 포함). 교수는 이 탭이 없으며 P01→P02→P09 단독 흐름이다.</p>
+
+  <h3>8.2 홈</h3>
+  <ul>
+    <li><b>최상단에 권한 체크리스트</b>(위치 · 블루투스)를 두어 현재 켜짐/꺼짐을 ✓/✗로 표시한다. 출결 메인(S03)엔 별도 권한 배너를 두지 않는다.</li>
+    <li>로그인 직후 진입. <b>현재 활성화된 출결(수업시간인 과목)</b>을 가장 크게 강조해 바로 접근하게 한다 → 탭하면 출결 메인(S03).</li>
+    <li>스크롤하면 나머지 수강 과목이 목록으로 보인다. <b>활성 아닌 과목은 회색 비활성</b>, 탭하면 "수업시간이 아닙니다" 안내(진입 차단).</li>
+    <li>홈에서 <b>현황(사후확인 S10)</b>과 <b>설정</b>으로 이동할 수 있다.</li>
+  </ul>
+
+  <h3>8.3 출결 진행 · 대기 큐</h3>
+  <ul>
+    <li>출결 버튼을 누르면 버튼이 로딩으로 바뀌고 <b>대기 큐</b>가 생긴다. 큐는 시뮬레이션으로 약 <code>7</code>번부터 줄어들어 <code>0</code>이 되면 결과가 확정된다.</li>
+    <li>정상·정시 → 출석 완료 / 인정시간 지남 → (로딩 후) 지각 처리 / 결함 → (로딩 후) 오류.</li>
+  </ul>
+
+  <h3>8.4 오류 &amp; 복구</h3>
+  <ul>
+    <li>인증번호는 <b>고정값 <code>7301</code></b>.</li>
+    <li>오류 해결은 <b>설정에서 권한(위치/블루투스)을 켜고 재시도</b>. (환경 오류는 피험자가 못 고치므로 인증번호로.)</li>
+    <li><b>오류 상태 복원</b>: 한 번 오류가 난 뒤에는 해당 과목에 다시 들어가도 출결 메인이 아니라 <b>마지막 오류 화면(S07)</b>이 다시 나온다.</li>
+  </ul>
+
+  <h3>8.5 설정</h3>
+  <p>피험자가 바꿀 수 있는 권한 토글(<b>위치 · 블루투스</b>)을 둔다. 환경(강의실/네트워크/서버)은 노출하지 않는다(운영자 전용).</p>
+
+  <h3>8.6 화면별 동작</h3>
+  <table>
+    <tr><th>화면</th><th>ID</th><th>동작 명세</th></tr>
+    <tr><td>출결 메인</td><td>S03</td><td>강의 정보 + 중앙 원형 버튼(파랑/출석체크) + 남은 인정시간 카운트다운. 권한 거부 상태면 상단에 권한 켜기 안내/토글. 강의실 밖이면 버튼 비활성.</td></tr>
+    <tr><td>진행 중</td><td>S04</td><td>버튼이 로딩으로 전환, 대기 큐 표시. §6 평가 후 결과 화면으로.</td></tr>
+    <tr><td>출석 완료</td><td>S05</td><td>초록 원형 + 처리 시각·방식. 진동(햅틱) 피드백.</td></tr>
+    <tr><td>지각 처리</td><td>S06</td><td>노랑 원형 + "지각 처리됨" + 처리 시각. 진동.</td></tr>
+    <tr><td>출결 오류</td><td>S07</td><td>빨강 원형 + 오류 코드/원인(정상 항목 숨김) + 최초 시도 시각 기록 안내. 하단 엄지존에 [재시도] [인증번호 입력].</td></tr>
+    <tr><td>인증번호 입력</td><td>S08</td><td>4자리 입력(시스템 키패드). 안내: 최초 시도 시각 기준 판정.</td></tr>
+    <tr><td>인증 출석/지각</td><td>S13 / S14</td><td>결과 화면(S05/S06과 동일 레이아웃). 처리 방식 = "인증번호 출석/지각", 최초 시도 시각 표기.</td></tr>
+  </table>
+  <div class="callout">
+    <div class="lbl">일관성 원칙</div>
+    S03(대기) → S04(진행) → S05/S06/S07(결과)은 <b>동일 레이아웃</b>에서 중앙 버튼의 색·텍스트만 바뀐다. 학생은 시선 이동 없이 결과를 인지한다.
+  </div>
+
+  <div class="callout key">
+    <div class="lbl">핵심 UI 불변 원칙</div>
+    학생 출결 화면(S03→S04→S05/S06/S07)의 <b>중앙 원은 항상 같은 위치·같은 크기</b>로 고정된다. 상태가 바뀌어도 원의 <b>색과 텍스트만</b> 바뀜다 — 파랑(출석체크) · 로딩 · 초록(출석) · 노랑(지각) · 빨강(오류). 위치 이동·크기 변화 금지(학생이 시선 이동 없이 결과 인지).
+  </div>
+  <p class="meta">푸시 알림은 구현하지 않는다 — 테스크 자체가 출석 수행 시뮬레이션이므로 외부에서 진입하는 흐름이 없다.</p>
+
+  <!-- ===================== 9 ===================== -->
+  <h2 id="s9">9. 교수 플로우 · 검증 항목</h2>
+  <p>교수는 환경 분기가 없다. 다음 3가지를 검증한다.</p>
+  <ol>
+    <li><b>출석 시작</b> (P01): 인정 시간을 선택하고 해당 과목의 출석을 시작한다. 시작 시 4자리 인증번호가 자동 생성된다.</li>
+    <li><b>실시간 모니터링</b> (P02): 남은 진행 시간 동안 학생 대시보드의 카운트(전체·출석·지각·미처리·오류)가 제대로 증가한다. <b>더미 학생들이 출결하는 모습이 자동으로 찍힌다.</b> (실시간 화면에 결석 탭 없음 — 미처리로 표시.)</li>
+    <li><b>상태 변경</b> (P09): 특정 학생을 선택해 출석/지각/결석으로 직접 변경할 수 있다(실행취소 포함).</li>
+  </ol>
+  <div class="callout">
+    <div class="lbl">더미 데이터</div>
+    P02의 학생 출결 증가는 실제 학생 연동이 아니라 <b>타이머 기반 더미 이벤트</b>로 구현한다(예: N초마다 1~수명씩 출석 처리되어 카운트·리스트가 갱신).
+  </div>
+
+  <h3>9.1 대시보드 실시간 시뮬레이션</h3>
+  <p>SCREEN 01에서 인정 시간을 고르고 출석을 시작하면, SCREEN 02 대시보드의 카운트가 타이머에 따라 더미로 변한다.</p>
+  <ul>
+    <li>시작 시점: 전원 <b>미처리</b>.</li>
+    <li>인정 시간 동안: 대부분 <b>출석</b>으로, 소수가 <b>오류</b>로 전환(출석 비율이 훨씬 큼).</li>
+    <li>인정 시간 종료 후: 남은 미처리 중 일부가 <b>지각</b>(또는 오류)으로, 끝까지 미처리면 수업 종료 시 <b>결석</b> 확정.</li>
+    <li>따라서 "전원 출석/오류"가 되지 않는다. 실시간 화면엔 결석 탭 없이 미처리로 표시.</li>
+    <li><b>명단 정렬</b>: 오류 → 지각 → 미처리 → 출석 순, 같은 상태 안에서는 <b>이름 오름차순(가나다)</b>. 시작 시 전원 미처리이며 시뮬레이션이 진행될수록 위 순서로 재정렬된다.</li>
+  </ul>
+  <p class="meta"><b>지난 강의 수정</b>(과거 차시 정정)은 검증 Task 범위 밖으로 두고 구현하지 않는다. 상태 변경(P09)은 진행 중 세션의 특정 학생에 한한다.</p>
+  <div class="callout">
+    <div class="lbl">교수 IA · 화면 범위</div>
+    교수는 학생용 3탭(홈/현황/설정)을 갖지 않는다. 로그인 → <b>교수 홈(P-HOME, 오늘의 강의)</b> → 강의 탭 → <b>출석 시작(P01, 인정시간 설정)</b> → 대시보드(P02) → 상태 변경(P09)의 <b>최소 흐름</b>만 구현한다. 교수 홈은 학생 홈과 같은 형태로 '오늘의 강의'를 강조해 진입한다(권한 체크리스트·3탭 없음). 교수 사후 통계·과목 목록 등 추가 화면은 검증 Task 밖으로 생략한다.
+  </div>
+
+  <!-- ===================== 10 ===================== -->
+  <h2 id="s10">10. 사후 확인 (Task 3)</h2>
+  <ul>
+    <li>환경과 무관하게 <b>항상 접근 가능한 공통 기능</b>. 더미 데이터로 채운다.</li>
+    <li>구조: 출석 현황 요약(S10) → 과목 선택 → 주차별 목록(S11, 아코디언 펼치기/접기) → 차시 상세(S12).</li>
+    <li>S10 상단에 "총 수업시수의 1/4 결석 시 F" 안내 + 위험도(정상/주의/위험).</li>
+    <li>과목 카드에 <b>전체 · 출석 · 지각 · 결석</b>을 함께 표시한다. <b>전체 = 총 수업시수(15주 기준 총 차시)</b>이며 현재까지 누계가 아니다 — 주 2차시 과목은 30, 주 1차시 과목은 15. (1/4 결석 = 전체÷4 기준으로 F 판정.)</li>
+    <li>S12(차시 상세)에는 처리 상태·처리 시각·<b>최초 시도 시각</b>·처리 방식·오류 발생 여부를 모두 표기 → 정정 요청 근거.</li>
+    <li>색상: 출석 초록 · 지각 노랑 · 결석 빨강 · 미처리 회색 (색상+텍스트 병행, 색약 고려).</li>
+  </ul>
+
+  <!-- ===================== 11 ===================== -->
+  <h2 id="s11">11. 화면 인벤토리</h2>
+  <table>
+    <tr><th>ID</th><th>화면</th><th>역할</th></tr>
+    <tr><td>OP0</td><td>스플래시 · 디버그 진입(로고 5탭)</td><td>공통</td></tr>
+    <tr><td>OP1</td><td>디버그 — 페르소나/시나리오 (학생·교수 분리)</td><td>운영자</td></tr>
+    <tr><td>OP2</td><td>디버그 — 권한/환경 (학생 전용)</td><td>운영자</td></tr>
+    <tr><td>S01</td><td>로그인 (스플래시 3초 후 · 항상 노출)</td><td>공통</td></tr>
+    <tr><td>HOME</td><td>학생 홈 (권한 체크리스트 · 활성과목 강조 · 3탭)</td><td>학생</td></tr>
+    <tr><td>SET</td><td>설정 (권한 토글 · 3탭)</td><td>학생</td></tr>
+    <tr><td>S03–S08, S13–S14</td><td>학생 출결/오류/인증 플로우</td><td>학생</td></tr>
+    <tr><td>S10–S12</td><td>학생 사후 확인</td><td>학생</td></tr>
+    <tr><td>P-HOME</td><td>교수 홈 (오늘의 강의 → 출석 시작 진입)</td><td>교수</td></tr>
+    <tr><td>P01 · P02 · P09</td><td>출석시작(인정시간) · 대시보드 · 상태변경</td><td>교수</td></tr>
+  </table>
+  <p class="meta">각 화면의 Lo-fi 목업은 <code>Flow Wireframe v1.html</code> 참조. 본 명세서와 목업이 충돌하면 <b>명세서 우선</b>.</p>
+
+  <h3>11.1 화면 이동 맵 (Navigation)</h3>
+  <p>동작 기준 구현체: <code>prototype/index.html</code>. 아래 전환 규칙을 그대로 따른다.</p>
+  <p class="b" style="margin:14px 0 4px;">공통 · 진입</p>
+  <table>
+    <tr><th>From</th><th>트리거</th><th>To</th></tr>
+    <tr><td>앱 실행</td><td>3초 경과</td><td>스플래시 → 로그인(S01)</td></tr>
+    <tr><td>스플래시</td><td>로고 5탭</td><td>디버그 OP1</td></tr>
+    <tr><td>앱 내 모든 화면</td><td>좌상단 '전자출결' 타이틀 5탭</td><td>디버그 OP1</td></tr>
+    <tr><td>디버그 OP1(학생)</td><td>다음</td><td>OP2</td></tr>
+    <tr><td>디버그 OP1(교수)</td><td>적용 &amp; 핸드오프</td><td>스플래시(재시작)</td></tr>
+    <tr><td>디버그 OP2</td><td>적용 &amp; 핸드오프</td><td>스플래시(재시작)</td></tr>
+    <tr><td>디버그 OP1/OP2</td><td>전체 초기화</td><td>저장 삭제 → 스플래시</td></tr>
+    <tr><td>로그인(S01)</td><td>로그인 · ID 범위로 분기</td><td>학생 홈 / 교수 홈(P-HOME)</td></tr>
+  </table>
+  <p class="b" style="margin:14px 0 4px;">학생</p>
+  <table>
+    <tr><th>From</th><th>트리거</th><th>To</th></tr>
+    <tr><td>홈</td><td>활성 과목 카드 탭</td><td>출결(S03)</td></tr>
+    <tr><td>홈</td><td>비활성 과목 탭</td><td>'수업시간 아님' 토스트(이동 없음)</td></tr>
+    <tr><td>홈 / 하단탭</td><td>현황 · 설정</td><td>현황(S10) · 설정</td></tr>
+    <tr><td>출결(S03)</td><td>중앙 원 탭(출석체크)</td><td>로딩(S04)</td></tr>
+    <tr><td>로딩(S04)</td><td>대기 큐 0 · 판정</td><td>출석(S05) / 지각(S06) / 오류(S07)</td></tr>
+    <tr><td>오류(S07)</td><td>재시도</td><td>로딩 → 재판정(현재 상태로)</td></tr>
+    <tr><td>오류(S07)</td><td>설정으로 이동</td><td>설정(권한 토글)</td></tr>
+    <tr><td>오류(S07)</td><td>인증번호 입력</td><td>인증(S08)</td></tr>
+    <tr><td>인증(S08)</td><td>7301 성공</td><td>출결 결과(S13/S14)</td></tr>
+    <tr><td>출결 결과</td><td>뒤로/홈</td><td>홈</td></tr>
+    <tr><td>홈 → 출결 재진입</td><td>직전이 오류였던 과목</td><td>마지막 오류 화면 복원</td></tr>
+    <tr><td>현황(S10)</td><td>과목 카드 탭</td><td>주차별(S11)</td></tr>
+    <tr><td>주차별(S11)</td><td>주차 펼침 영역 탭</td><td>차시 상세(S12 · 해당 주차 전체 차시)</td></tr>
+  </table>
+  <p class="b" style="margin:14px 0 4px;">교수</p>
+  <table>
+    <tr><th>From</th><th>트리거</th><th>To</th></tr>
+    <tr><td>교수 홈(P-HOME)</td><td>출석 시작하기</td><td>출석 시작(P01)</td></tr>
+    <tr><td>출석 시작(P01)</td><td>인정시간 선택 · 출석 시작</td><td>대시보드(P02) · 시뮬 시작</td></tr>
+    <tr><td>대시보드(P02)</td><td>학생 행 탭</td><td>상태 변경(P09)</td></tr>
+    <tr><td>상태 변경(P09)</td><td>출석/지각/결석 · 실행취소</td><td>대시보드(P02) 복귀</td></tr>
+  </table>
+
+  <!-- ===================== 12 ===================== -->
+  <h2 id="s12">12. 데이터 · 영속성 모델</h2>
+  <p>프리셋과 진행 상태는 기기 영속 저장소에 보관한다. 제안 스키마:</p>
+  <pre><span class="k">preset</span> = {
+  persona:      <span class="m">'student' | 'professor'</span>,
+  name:         <span class="m">string</span>,             <span class="c">// 자유 입력</span>
+  account:      <span class="m">{ id, pw }</span>,         <span class="c">// 고정값</span>
+  subject:      <span class="m">string</span>,             <span class="c">// 학생 전용</span>
+  acceptMin:    5,                  <span class="c">// 인정시간 고정</span>
+  remainingSec: <span class="m">number</span>,             <span class="c">// 진입 시점 잔여(학생)</span>
+  perms:  { location: <span class="m">'허용'|'거부'</span>, bluetooth: <span class="m">'허용'|'거부'</span> },   <span class="c">// 피험자 변경 가능</span>
+  env:    { classroom: <span class="m">'내'|'밖'</span>, network: <span class="m">'정상'|'오류'</span>, server: <span class="m">'정상'|'오류'</span> } <span class="c">// 변경 불가</span>
+}
+
+<span class="k">runtime</span> = {
+  firstAttemptAt: <span class="m">timestamp | null</span>,  <span class="c">// 최초 시도 시각</span>
+  subjectStates:  <span class="m">{ [subjectId]: 'idle'|'loading'|'present'|'late'|'error' }</span>,
+  authCode:       <span class="m">'7301'</span>             <span class="c">// 고정값</span>
+}</pre>
+  <ul>
+    <li><code>perms</code>는 런타임에 피험자가 설정에서 토글로 갱신한다(초기값은 preset).</li>
+    <li><b>과목별 상태(<code>subjectStates</code>)를 저장</b>한다. <code>error</code>로 끝난 과목은 재진입 시 출결 메인이 아니라 마지막 오류 화면을 복원한다.</li>
+    <li>핸드오프 후에도 위 상태는 유지되며, 운영자가 디버그에서 재설정할 때만 초기화된다.</li>
+  </ul>
+
+  <h3>12.1 더미 학생 명단 (40명 · 고정)</h3>
+  <p>교수 대시보드·명단에 쓰는 고정 더미 로스터. 학번 <code>202600001</code>~<code>202600040</code> (학생 페르소나 테스트 계정 202600001 포함). 이름은 무작위 생성 후 고정.</p>
+  <pre>202600001 김민준   202600002 이서연   202600003 정우진   202600004 최예은
+202600005 강하윤   202600006 조현우   202600007 윤지우   202600008 임도윤
+202600009 한서준   202600010 오지민   202600011 서준영   202600012 신유나
+202600013 권태현   202600014 황민서   202600015 송재윤   202600016 안소율
+202600017 류하은   202600018 배성민   202600019 전지안   202600020 홍시우
+202600021 고은채   202600022 문준호   202600023 양다은   202600024 백지원
+202600025 허윤서   202600026 남기훈   202600027 심예진   202600028 노건우
+202600029 하지율   202600030 곽도현   202600031 성민재   202600032 박지호
+202600033 차예린   202600034 주한결   202600035 우지호   202600036 구나윤
+202600037 마동현   202600038 진서아   202600039 표은지   202600040 명재훈</pre>
+
+  <!-- ===================== 13 ===================== -->
+  <h2 id="s13">13. 미결정 · TODO</h2>
+  <ul>
+    <li><span class="todo">BT-05(블루투스)</span> — 단순 버튼 방식에서 의미가 약함. 분기 유지/삭제 결정.</li>
+    <li><span class="todo">과목·주차 더미 데이터</span> — 사후확인(T3) 과목 수·주차·차시 기록 구체화.</li>
+    <li><span class="todo">크로스플랫폼 스택</span> — Flutter vs React Native (클로드 코드 단계에서 결정).</li>
+  </ul>
+  <p class="meta"><b>확정됨</b>: 로그인 화면 노출 · 하단 3탭(홈/현황/설정) · 인증번호 고정 7301 · 동적 시간 계산 · 오류 상태 복원 · 지난 강의 수정 범위 밖 · 홈 권한 체크리스트 · 현황 전체 표시 · 더미 40명 로스터 · 교수 단독 흐름(탭 없음).</p>
+
+  <div class="footer">
+    <span>전자출결 기능 명세서 v1.0 · 끝</span>
+    <span>C팀 · HCI 2026</span>
+  </div>
+
+</div>
+</body>
+</html>
